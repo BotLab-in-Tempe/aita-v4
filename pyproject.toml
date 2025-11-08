@@ -31,10 +31,10 @@ requires = ["setuptools>=73.0.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-packages = ["aita"]
-[tool.setuptools.package-dir]
-"aita" = "src/aita"
+package-dir = {"" = "src"}
 
+[tool.setuptools.packages.find]
+where = ["src"]
 
 [tool.setuptools.package-data]
 "*" = ["py.typed"]
