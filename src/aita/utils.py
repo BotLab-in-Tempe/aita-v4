@@ -2,9 +2,50 @@ from __future__ import annotations
 
 import os
 from typing import List
+from functools import wraps
 
 from aita.state import Plan
 from aita.docker_env import DockerEnvironment, DockerEnvironmentConfig
+from langgraph.types import interrupt
+from aita.logger import get_logger
+
+logger = get_logger()
+
+
+def with_error_escalation(node_name: str):
+    """
+    Decorator that wraps nodes with centralized error escalation logic.
+    When an exception occurs, it creates an interrupt with error details
+    and available actions (retry, skip, abort).
+    """
+
+    def decorator(fn):
+        @wraps(fn)
+        async def wrapper(state, *args, **kwargs):
+            try:
+                return await fn(state, *args, **kwargs)
+            except Exception as e:
+                logger.warning(
+                    f"Error escalation triggered - node={node_name}, "
+                    f"error_type={type(e).__name__}, error={str(e)[:100]}"
+                )
+                # CENTRALIZED escalation logic
+                return interrupt(
+                    {
+                        "type": "node_error",
+                        "node": node_name,
+                        "error": str(e),
+                        "state_snapshot": {
+                            "keys": list(state.keys()),
+                        },
+                        "actions": ["retry", "skip", "abort"],
+                    }
+                )
+
+        return wrapper
+
+    return decorator
+
 
 # Configure project and snapshot paths from environment variables
 EXEC_IMAGE = os.getenv("EXEC_IMAGE", "aita-sandbox:latest")
@@ -26,7 +67,8 @@ async def build_docker_env_for_user(user_id: str) -> DockerEnvironment:
     """
     run_args: list[str] = [
         "--rm",
-        "-v", f"{EXEC_PROJECTS_ROOT}:/workspace/projects:ro",
+        "-v",
+        f"{EXEC_PROJECTS_ROOT}:/workspace/projects:ro",
     ]
 
     # Walk the shared project tree and mount this user's snapshot into each level
@@ -45,7 +87,9 @@ async def build_docker_env_for_user(user_id: str) -> DockerEnvironment:
                 # user might not have submitted for this level yet
                 continue
 
-            container_target = f"/workspace/projects/{project}/{level}/student_code_snapshot"
+            container_target = (
+                f"/workspace/projects/{project}/{level}/student_code_snapshot"
+            )
             run_args.extend(["-v", f"{snapshot_host}:{container_target}"])
 
     return DockerEnvironment(

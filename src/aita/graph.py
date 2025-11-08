@@ -11,7 +11,12 @@ from aita.state import (
     Context,
 )
 from aita.configuration import Configuration
-from aita.retriever_nodes import probe_planner, cli_agent, response_generator, cli_trace_summarizer
+from aita.retriever_nodes import (
+    probe_planner,
+    cli_agent,
+    response_generator,
+    cli_trace_summarizer,
+)
 from aita.its_nodes import (
     context_gate,
     evaluator,
@@ -22,6 +27,9 @@ from aita.its_nodes import (
 from urllib.parse import quote_plus
 from psycopg_pool import AsyncConnectionPool
 from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
+from aita.logger import get_logger
+
+logger = get_logger()
 # Store-related imports commented out
 # from langgraph.store.postgres.aio import AsyncPostgresStore
 # from langgraph.store.base import BaseStore
@@ -39,20 +47,41 @@ def _dsn() -> str:
 async def init_checkpointer(
     max_size: int = 10,
 ) -> tuple[AsyncConnectionPool, AsyncPostgresSaver]:
-    pool = AsyncConnectionPool(
-        _dsn(),
-        open=False,
-        max_size=max_size,
-        kwargs={
-            "autocommit": True,
-            "connect_timeout": 5,
-            "prepare_threshold": None,
-        },
+    pg_host = os.getenv("PGHOST", "unknown")
+    pg_port = os.getenv("PGPORT", "unknown")
+    pg_db = os.getenv("PGDATABASE", "unknown")
+
+    logger.info(
+        f"Initializing PostgreSQL connection pool - "
+        f"host={pg_host}, port={pg_port}, database={pg_db}, max_size={max_size}"
     )
-    await pool.open()
-    saver = AsyncPostgresSaver(pool)
-    await saver.setup()
-    return pool, saver
+
+    try:
+        pool = AsyncConnectionPool(
+            _dsn(),
+            open=False,
+            max_size=max_size,
+            kwargs={
+                "autocommit": True,
+                "connect_timeout": 5,
+                "prepare_threshold": None,
+            },
+        )
+        await pool.open()
+        logger.info("PostgreSQL connection pool opened successfully")
+
+        saver = AsyncPostgresSaver(pool)
+        await saver.setup()
+        logger.info("AsyncPostgresSaver setup complete")
+
+        return pool, saver
+    except Exception as e:
+        logger.error(
+            f"Failed to initialize PostgreSQL checkpointer - "
+            f"host={pg_host}, port={pg_port}, database={pg_db}, "
+            f"error={type(e).__name__}: {str(e)}"
+        )
+        raise
 
 
 def route_retriever_start(state: AitaState):
@@ -74,9 +103,11 @@ def create_retriever_subgraph():
     builder.add_node("probe_planner", probe_planner)
     builder.add_node("cli_agent", cli_agent)
     builder.add_node("response_generator", response_generator)
-    
+
     # Conditional start: summarize existing trace before running probe_planner
-    builder.add_conditional_edges(START, route_retriever_start, ["cli_trace_summarizer", "probe_planner"])
+    builder.add_conditional_edges(
+        START, route_retriever_start, ["cli_trace_summarizer", "probe_planner"]
+    )
     builder.add_edge("cli_trace_summarizer", "probe_planner")
     builder.add_edge("probe_planner", "cli_agent")
     builder.add_edge("cli_agent", "response_generator")
@@ -102,7 +133,9 @@ def create_aita_graph(checkpointer=None):  # Removed store parameter
     builder.add_edge("planner", "dialogue_manager")
     builder.add_edge("summarize_trace", END)
 
-    return builder.compile(name="aita", checkpointer=checkpointer)  # Removed store parameter
+    return builder.compile(
+        name="aita", checkpointer=checkpointer
+    )  # Removed store parameter
 
 
 async def make_graph():

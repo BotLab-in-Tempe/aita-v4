@@ -17,12 +17,13 @@ from aita.state import (
 from aita.prompts import PROMPTS
 from aita.configuration import Configuration
 from langchain.chat_models import init_chat_model
-from aita.utils import build_docker_env_for_user
+from aita.utils import build_docker_env_for_user, with_error_escalation
 from aita.tools import make_execute_bash_tool
 from langchain.agents import create_agent
 from langchain_openai import ChatOpenAI
 
 
+@with_error_escalation("probe_planner")
 async def probe_planner(
     state: AitaState, config: RunnableConfig, runtime: Runtime[Context]
 ) -> Command[Literal["cli_agent"]]:
@@ -45,7 +46,7 @@ async def probe_planner(
     # Get the AITA trace
     trace = state.get("trace", [])
     trace_text = "\n".join(trace) if trace else "No trace yet"
-    
+
     student_environment_context = (
         PROMPTS["student_environment_context"].content
         if "student_environment_context" in PROMPTS
@@ -73,6 +74,7 @@ async def probe_planner(
     )
 
 
+@with_error_escalation("cli_agent")
 async def cli_agent(
     state: AitaState, config: RunnableConfig, runtime: Runtime[Context]
 ) -> Command[Literal["__end__"]]:
@@ -98,8 +100,7 @@ async def cli_agent(
     )
 
     formatted_prompt = PROMPTS["cli_agent_system_prompt"].content.format(
-        probe_task=probe_task,
-        student_environment_context=student_environment_context
+        probe_task=probe_task, student_environment_context=student_environment_context
     )
 
     agent = create_agent(
@@ -116,6 +117,7 @@ async def cli_agent(
     )
 
 
+@with_error_escalation("response_generator")
 async def response_generator(
     state: AitaState, config: RunnableConfig, runtime: Runtime[Context]
 ) -> Command[Literal["__end__"]]:
@@ -136,16 +138,15 @@ async def response_generator(
     )
 
     cli_trace = state.get("cli_trace", []) or []
-    
+
     # Get the AITA trace
     trace = state.get("trace", [])
     trace_text = "\n".join(trace) if trace else "No trace yet"
-    
+
     probe_task = state.get("probe_task") or "No probe task"
 
     prompt_content = PROMPTS["response_generator_system_prompt"].content.format(
-        probe_task=probe_task,
-        aita_trace=trace_text
+        probe_task=probe_task, aita_trace=trace_text
     )
 
     response: ResponseGeneratorOutput = await model.ainvoke(
@@ -161,6 +162,7 @@ async def response_generator(
     )
 
 
+@with_error_escalation("cli_trace_summarizer")
 async def cli_trace_summarizer(
     state: AitaState, config: RunnableConfig, runtime: Runtime[Context]
 ) -> Dict[str, Any]:
@@ -199,4 +201,9 @@ async def cli_trace_summarizer(
 
     summary_text = response.content if hasattr(response, "content") else str(response)
 
-    return {"cli_trace": {"type": "override", "value": [SystemMessage(content=summary_text)]}}
+    return {
+        "cli_trace": {
+            "type": "override",
+            "value": [SystemMessage(content=summary_text)],
+        }
+    }

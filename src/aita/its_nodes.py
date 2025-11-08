@@ -16,9 +16,10 @@ from aita.state import (
     EvaluatorOutput,
     PlannerOutput,
 )
-from aita.utils import format_plan_md
+from aita.utils import format_plan_md, with_error_escalation
 
 
+@with_error_escalation("context_gate")
 async def context_gate(
     state: AitaState, config: RunnableConfig, runtime: Runtime[Context]
 ) -> Command[Literal["retriever", "evaluator", "dialogue_manager"]]:
@@ -66,7 +67,9 @@ async def context_gate(
     from aita.state import ContextGateSignal
 
     if response.signal == ContextGateSignal.need_retrieval:
-        trace_entry = f"[Context Gate] {response.reasoning}\nSignal: {response.signal.value}"
+        trace_entry = (
+            f"[Context Gate] {response.reasoning}\nSignal: {response.signal.value}"
+        )
         return Command(
             goto="retriever",
             update={
@@ -74,7 +77,9 @@ async def context_gate(
             },
         )
     elif response.signal == ContextGateSignal.need_student_probe:
-        trace_entry = f"[Context Gate] {response.reasoning}\nSignal: {response.signal.value}"
+        trace_entry = (
+            f"[Context Gate] {response.reasoning}\nSignal: {response.signal.value}"
+        )
         return Command(
             goto="dialogue_manager",
             update={
@@ -82,7 +87,9 @@ async def context_gate(
             },
         )
     else:
-        trace_entry = f"[Context Gate] {response.reasoning}\nSignal: {response.signal.value}"
+        trace_entry = (
+            f"[Context Gate] {response.reasoning}\nSignal: {response.signal.value}"
+        )
         return Command(
             goto="evaluator",
             update={
@@ -91,6 +98,7 @@ async def context_gate(
         )
 
 
+@with_error_escalation("evaluator")
 async def evaluator(
     state: AitaState, config: RunnableConfig, runtime: Runtime[Context]
 ) -> Command[Literal["planner", "dialogue_manager"]]:
@@ -131,12 +139,14 @@ async def evaluator(
 
     # Build trace entry with evaluator reasoning and signal
     trace_entry = f"[Evaluator] {response.reasoning}\nSignal: {response.signal.value}"
-    
+
     # Add subgoal completion info to trace if applicable
     if response.completed_subgoals:
         max_completed_index = max(response.completed_subgoals)
         new_cursor = max_completed_index + 1
-        completed_indices = ", ".join(str(i) for i in sorted(response.completed_subgoals))
+        completed_indices = ", ".join(
+            str(i) for i in sorted(response.completed_subgoals)
+        )
         trace_entry += f"\nCompleted subgoals: {completed_indices}"
 
     update = {
@@ -156,6 +166,7 @@ async def evaluator(
         return Command(goto="dialogue_manager", update=update)
 
 
+@with_error_escalation("planner")
 async def planner(
     state: AitaState, config: RunnableConfig, runtime: Runtime[Context]
 ) -> Dict[str, Any]:
@@ -215,6 +226,7 @@ async def planner(
         return {"plan": Plan(subgoals=new_subgoals)}
 
 
+@with_error_escalation("dialogue_manager")
 async def dialogue_manager(
     state: AitaState, config: RunnableConfig, runtime: Runtime[Context]
 ) -> Command[Literal["summarize_trace", "__end__"]]:
@@ -263,6 +275,7 @@ async def dialogue_manager(
     )
 
 
+@with_error_escalation("summarize_trace")
 async def summarize_trace(
     state: AitaState, config: RunnableConfig, runtime: Runtime[Context]
 ) -> Dict[str, Any]:
@@ -288,7 +301,7 @@ async def summarize_trace(
 
     # Summarize all entries into one comprehensive summary
     trace_entries_text = "\n\n".join(f"- {entry}" for entry in trace_list)
-    
+
     # Get the current plan for context
     plan = state.get("plan")
     plan_cursor = state.get("plan_cursor", 0)
@@ -297,10 +310,9 @@ async def summarize_trace(
         if plan and plan.subgoals
         else "No plan"
     )
-    
+
     prompt_content = PROMPTS["trace_summarizer_system_prompt"].content.format(
-        trace_entries=trace_entries_text,
-        current_plan=formatted_plan
+        trace_entries=trace_entries_text, current_plan=formatted_plan
     )
 
     response = await model.ainvoke([SystemMessage(content=prompt_content)])

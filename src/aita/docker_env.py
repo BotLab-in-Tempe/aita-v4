@@ -5,6 +5,10 @@ import subprocess
 from dataclasses import asdict, dataclass, field
 from typing import Any
 
+from aita.logger import get_logger
+
+logger = get_logger()
+
 
 @dataclass
 class DockerEnvironmentConfig:
@@ -14,9 +18,7 @@ class DockerEnvironmentConfig:
     forward_env: list[str] = field(default_factory=list)
     timeout: int = 30
     executable: str = os.getenv("DOCKER_EXECUTABLE", "docker")
-    run_args: list[str] = field(
-        default_factory=lambda: ["--rm"]
-    )
+    run_args: list[str] = field(default_factory=lambda: ["--rm"])
     container_timeout: str = "30m"
     pull_timeout: int = 120
 
@@ -46,9 +48,12 @@ class DockerEnvironment:
         check_cmd = [
             self.config.executable,
             "ps",
-            "--filter", f"name={container_name}",
-            "--filter", "status=running",
-            "--format", "{{.ID}}",
+            "--filter",
+            f"name={container_name}",
+            "--filter",
+            "status=running",
+            "--format",
+            "{{.ID}}",
         ]
         check_result = subprocess.run(
             check_cmd,
@@ -60,6 +65,10 @@ class DockerEnvironment:
 
         if existing_id:
             self.container_id = existing_id
+            logger.info(
+                f"Docker container reused - user_id={self.user_id}, "
+                f"container_id={existing_id[:12]}, name={container_name}"
+            )
             self._reset_idle_timer()
             return
 
@@ -67,8 +76,10 @@ class DockerEnvironment:
             self.config.executable,
             "ps",
             "-a",
-            "--filter", f"name={container_name}",
-            "--format", "{{.ID}}",
+            "--filter",
+            f"name={container_name}",
+            "--format",
+            "{{.ID}}",
         ]
         check_any_result = subprocess.run(
             check_any_cmd,
@@ -79,21 +90,36 @@ class DockerEnvironment:
         existing_any_id = check_any_result.stdout.strip()
 
         if existing_any_id:
+            logger.info(
+                f"Docker container restarting - user_id={self.user_id}, "
+                f"container_id={existing_any_id[:12]}, name={container_name}"
+            )
             start_cmd = [
                 self.config.executable,
                 "start",
                 existing_any_id,
             ]
-            start_result = subprocess.run(
-                start_cmd,
-                capture_output=True,
-                text=True,
-                timeout=self.config.pull_timeout,
-                check=True,
-            )
-            self.container_id = start_result.stdout.strip() or existing_any_id
-            self._reset_idle_timer()
-            return
+            try:
+                start_result = subprocess.run(
+                    start_cmd,
+                    capture_output=True,
+                    text=True,
+                    timeout=self.config.pull_timeout,
+                    check=True,
+                )
+                self.container_id = start_result.stdout.strip() or existing_any_id
+                logger.info(
+                    f"Docker container restarted - user_id={self.user_id}, "
+                    f"container_id={self.container_id[:12]}"
+                )
+                self._reset_idle_timer()
+                return
+            except subprocess.CalledProcessError as e:
+                logger.error(
+                    f"Docker container restart failed - user_id={self.user_id}, "
+                    f"container_id={existing_any_id[:12]}, returncode={e.returncode}"
+                )
+                raise
 
         run_args = [arg for arg in self.config.run_args if arg != "--rm"]
 
@@ -123,20 +149,35 @@ class DockerEnvironment:
             watchdog_script,
         ]
 
-        result = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            timeout=self.config.pull_timeout,
-            check=True,
+        logger.info(
+            f"Docker container creating - user_id={self.user_id}, "
+            f"name={container_name}, image={self.config.image}"
         )
+        try:
+            result = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                timeout=self.config.pull_timeout,
+                check=True,
+            )
+            self.container_id = result.stdout.strip()
+            logger.info(
+                f"Docker container created - user_id={self.user_id}, "
+                f"container_id={self.container_id[:12]}, image={self.config.image}"
+            )
+        except subprocess.CalledProcessError as e:
+            logger.error(
+                f"Docker container creation failed - user_id={self.user_id}, "
+                f"image={self.config.image}, returncode={e.returncode}, "
+                f"stderr={e.stderr[:200] if e.stderr else 'N/A'}"
+            )
+            raise
 
-        self.container_id = result.stdout.strip()
-    
     def _reset_idle_timer(self) -> None:
         if not self.container_id:
             return
-        
+
         try:
             cmd = [
                 self.config.executable,
@@ -149,7 +190,9 @@ class DockerEnvironment:
         except Exception:
             pass
 
-    def execute(self, command: str, cwd: str | None = None, *, timeout: int | None = None) -> dict[str, Any]:
+    def execute(
+        self, command: str, cwd: str | None = None, *, timeout: int | None = None
+    ) -> dict[str, Any]:
         assert self.container_id, "Container not started"
 
         self._reset_idle_timer()
@@ -180,6 +223,10 @@ class DockerEnvironment:
 
     def cleanup(self) -> None:
         if getattr(self, "container_id", None) is not None:
+            logger.info(
+                f"Docker container cleanup initiated - user_id={self.user_id}, "
+                f"container_id={self.container_id[:12]}"
+            )
             cmd = (
                 f"(timeout 60 {self.config.executable} stop {self.container_id} "
                 f"|| {self.config.executable} rm -f {self.container_id}) "
