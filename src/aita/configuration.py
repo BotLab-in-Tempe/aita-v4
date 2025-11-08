@@ -1,6 +1,3 @@
-# src/daser/configuration.py
-"""Runtime configuration schema for the DASER LangGraph agent."""
-
 from __future__ import annotations
 
 from pydantic import BaseModel, Field
@@ -12,7 +9,6 @@ load_dotenv(override=True)
 
 
 class Configuration(BaseModel):
-    """Runtime knobs exposed to LangGraph configurable."""
 
     # Model categories
     main_model: str = Field(
@@ -41,7 +37,6 @@ class Configuration(BaseModel):
         description="Number of trace entries before summarization is triggered",
     )
 
-    # Operational logging configuration
     log_level: str = Field(
         default="INFO", description="Logging level for operational logs"
     )

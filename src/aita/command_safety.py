@@ -11,7 +11,6 @@ class CommandSafetyResult:
     reason: str
 
 
-# Very small allow-list for now
 ALLOWED_BINARIES: set[str] = {
     "ls",
     "cat",
