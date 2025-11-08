@@ -47,10 +47,13 @@ class PlanPatch(BaseModel):
     subgoals: List[SubGoal] = Field(default_factory=list)
 
 
-def plan_splice(prev: Optional[Plan], patch: PlanPatch | dict | None) -> Plan:
+def plan_splice(prev: Optional[Plan], patch: Plan | PlanPatch | dict | None) -> Plan:
     prev_list: List[SubGoal] = [] if prev is None else list(prev.subgoals)
     if not patch:
         return Plan(subgoals=prev_list)
+    # If a full Plan is passed, replace entirely
+    if isinstance(patch, Plan):
+        return patch
     if isinstance(patch, dict):
         patch = PlanPatch(**patch)
     idx = max(0, min(patch.from_index, len(prev_list)))
@@ -108,7 +111,6 @@ class ResponseGeneratorOutput(BaseModel):
 class AitaState(MessagesState):
     trace: Annotated[list[str], override_reducer] = []
     cli_trace: Annotated[list[AnyMessage], override_reducer] = []
-    context_gate_uncertainty: Optional[str] = None
     plan: Annotated[Optional[Plan], plan_splice] = None
     plan_cursor: int = 0
     probe_task: Optional[str] = None

@@ -71,7 +71,6 @@ async def context_gate(
             goto="retriever",
             update={
                 "trace": [trace_entry],
-                "context_gate_uncertainty": response.reasoning,
             },
         )
     elif response.signal == ContextGateSignal.need_student_probe:
@@ -80,7 +79,6 @@ async def context_gate(
             goto="dialogue_manager",
             update={
                 "trace": [trace_entry],
-                "context_gate_uncertainty": response.reasoning,
             },
         )
     else:
@@ -89,7 +87,6 @@ async def context_gate(
             goto="evaluator",
             update={
                 "trace": [trace_entry],
-                "context_gate_uncertainty": response.reasoning,
             },
         )
 
@@ -292,8 +289,18 @@ async def summarize_trace(
     # Summarize all entries into one comprehensive summary
     trace_entries_text = "\n\n".join(f"- {entry}" for entry in trace_list)
     
+    # Get the current plan for context
+    plan = state.get("plan")
+    plan_cursor = state.get("plan_cursor", 0)
+    formatted_plan = (
+        format_plan_md(plan, title="Current Plan", plan_cursor=plan_cursor)
+        if plan and plan.subgoals
+        else "No plan"
+    )
+    
     prompt_content = PROMPTS["trace_summarizer_system_prompt"].content.format(
-        trace_entries=trace_entries_text
+        trace_entries=trace_entries_text,
+        current_plan=formatted_plan
     )
 
     response = await model.ainvoke([SystemMessage(content=prompt_content)])

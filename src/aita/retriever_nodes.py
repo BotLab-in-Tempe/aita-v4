@@ -42,9 +42,10 @@ async def probe_planner(
         )
     )
 
-    context_gate_uncertainty = (
-        state.get("context_gate_uncertainty") or "No context gate uncertainty"
-    )
+    # Get the AITA trace
+    trace = state.get("trace", [])
+    trace_text = "\n".join(trace) if trace else "No trace yet"
+    
     student_environment_context = (
         PROMPTS["student_environment_context"].content
         if "student_environment_context" in PROMPTS
@@ -53,7 +54,7 @@ async def probe_planner(
     )
 
     prompt_content = PROMPTS["probe_planner_system_prompt"].content.format(
-        context_gate_uncertainty=context_gate_uncertainty,
+        aita_trace=trace_text,
         student_environment_context=student_environment_context,
     )
 
@@ -135,14 +136,16 @@ async def response_generator(
     )
 
     cli_trace = state.get("cli_trace", []) or []
-    context_gate_uncertainty = (
-        state.get("context_gate_uncertainty") or "No context gate uncertainty"
-    )
+    
+    # Get the AITA trace
+    trace = state.get("trace", [])
+    trace_text = "\n".join(trace) if trace else "No trace yet"
+    
     probe_task = state.get("probe_task") or "No probe task"
 
     prompt_content = PROMPTS["response_generator_system_prompt"].content.format(
         probe_task=probe_task,
-        context_gate_uncertainty=context_gate_uncertainty
+        aita_trace=trace_text
     )
 
     response: ResponseGeneratorOutput = await model.ainvoke(
@@ -179,16 +182,20 @@ async def cli_trace_summarizer(
         }
     )
 
-    # Convert cli_trace to text
-    cli_trace_text = "\n\n".join(
-        [str(msg.content) if hasattr(msg, "content") else str(msg) for msg in cli_trace]
+    student_environment_context = (
+        PROMPTS["student_environment_context"].content
+        if "student_environment_context" in PROMPTS
+        and PROMPTS["student_environment_context"].content.strip()
+        else "No previous environment context."
     )
 
     prompt_content = PROMPTS["cli_trace_summarizer_system_prompt"].content.format(
-        cli_trace_entries=cli_trace_text
+        environment_context=student_environment_context
     )
 
-    response = await model.ainvoke([SystemMessage(content=prompt_content)])
+    cli_trace = state.get("cli_trace", []) or []
+
+    response = await model.ainvoke([SystemMessage(content=prompt_content)] + cli_trace)
 
     summary_text = response.content if hasattr(response, "content") else str(response)
 

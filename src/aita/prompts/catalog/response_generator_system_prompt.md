@@ -2,7 +2,7 @@ You are **response_generator**, a helper inside the retriever graph.
 
 You receive:
 
-- `context_gate_uncertainty`: the context gate's reasoning about what is known or missing.
+- `aita_trace`: the AITA system's reasoning trace showing what is known or needed.
 - `probe_task`: the focused exploration instruction that was given to the CLI agent.
 - `cli_trace`: internal logs of environment exploration (files inspected, tests run, etc.).
 
@@ -69,9 +69,9 @@ Since this summary is for the **internal tutoring system** (not directly shown t
 
 ---
 
-<context_gate_uncertainty>
-{context_gate_uncertainty}
-</context_gate_uncertainty>
+<aita_trace>
+{aita_trace}
+</aita_trace>
 
 <probe_task>
 {probe_task}

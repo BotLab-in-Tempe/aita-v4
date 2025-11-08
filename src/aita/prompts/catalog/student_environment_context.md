@@ -4,6 +4,7 @@ The environment is a Docker container that contains all project data for the cou
 - Each project has its own directory in the projects directory
 - Each project is divided into levels with numbered directories (01, 02, 03, etc.)
 - Projects have main instructions (`project_instructions.md`) and each level has its own instructions (`level_instructions.md`)
+- **Note**: `project_instructions.md` sometimes only provides a high-level introduction to the project. If that's not enough information to answer the question, you should examine the `level_instructions.md` files in each level directory until you find sufficient details about requirements, dependencies, grading criteria, or other specifics
 
 **Template Code:**
 - Students usually receive a template for a project with starter files
@@ -16,7 +17,8 @@ The environment is a Docker container that contains all project data for the cou
 - Student code can be in any level depending on when they last updated it
 
 **Tests:**
-- Each level can have system tests and user tests
+- Each level can have system tests and user tests, which are the only test case files used to test the student code. 
+- If present you can find them in system_tests or user_tests dirs in each level dir.
 - System tests are used by a tester to validate the student's implementation
 - User tests are supposed to be written by the students to test their own program
 - You can look at these test case files but cannot run the tester as you don't have access to it
