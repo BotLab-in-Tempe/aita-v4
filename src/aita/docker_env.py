@@ -153,7 +153,7 @@ class DockerEnvironment:
             f"Docker container creating - user_id={self.user_id}, "
             f"name={container_name}, image={self.config.image}"
         )
-        logger.error(f"DEBUG DOCKER CMD: {' '.join(cmd)}")
+        # logger.error(f"DEBUG DOCKER CMD: {' '.join(cmd)}")
         try:
             result = subprocess.run(
                 cmd,
