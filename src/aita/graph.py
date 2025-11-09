@@ -15,7 +15,6 @@ from aita.retriever_nodes import (
     probe_planner,
     cli_agent,
     response_generator,
-    cli_trace_summarizer,
 )
 from aita.its_nodes import (
     context_gate,
@@ -84,14 +83,6 @@ async def init_checkpointer(
         raise
 
 
-def route_retriever_start(state: AitaState):
-    """Route to cli_trace_summarizer if trace exists, otherwise directly to probe_planner"""
-    cli_trace = state.get("cli_trace", [])
-    if cli_trace:
-        return "cli_trace_summarizer"
-    return "probe_planner"
-
-
 def create_retriever_subgraph():
     builder = StateGraph(
         AitaState,
@@ -99,19 +90,14 @@ def create_retriever_subgraph():
         config_schema=Configuration,
         context_schema=Context,
     )
-    builder.add_node("cli_trace_summarizer", cli_trace_summarizer)
     builder.add_node("probe_planner", probe_planner)
     builder.add_node("cli_agent", cli_agent)
     builder.add_node("response_generator", response_generator)
 
-    # Conditional start: summarize existing trace before running probe_planner
-    builder.add_conditional_edges(
-        START, route_retriever_start, ["cli_trace_summarizer", "probe_planner"]
-    )
-    builder.add_edge("cli_trace_summarizer", "probe_planner")
+    builder.add_edge(START, "probe_planner")
     builder.add_edge("probe_planner", "cli_agent")
     builder.add_edge("cli_agent", "response_generator")
-    builder.add_edge("response_generator", END)  # Checkpoint actual trace at the end
+    builder.add_edge("response_generator", END)
 
     return builder.compile()
 

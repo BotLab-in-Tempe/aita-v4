@@ -66,31 +66,19 @@ class PlannerOutput(BaseModel):
     )
 
 
-class ContextGateSignal(str, Enum):
-    context_sufficient = "context_sufficient"
-    need_student_probe = "need_student_probe"
-    need_retrieval = "need_retrieval"
-
-
 class ContextGateOutput(BaseModel):
     reasoning: str = Field(
         description="Step-by-step reasoning for the context assessment"
     )
-    signal: ContextGateSignal = Field(
-        description="The signal indicating what action to take next"
+    need_retrieval: bool = Field(
+        description="Whether retrieval should be called to get more context"
     )
-
-
-class EvaluatorSignal(str, Enum):
-    need_plan = "need_plan"
-    continue_plan = "continue_plan"
-    direct_response = "direct_response"
 
 
 class EvaluatorOutput(BaseModel):
     reasoning: str = Field(description="Step-by-step reasoning for evaluation")
-    signal: EvaluatorSignal = Field(
-        description="Signal indicating the action: need_plan (initial or replanning), continue_plan (proceed with current plan), or direct_response (no plan needed)"
+    need_plan: bool = Field(
+        description="Whether a tutoring plan is needed (initial planning or replanning)"
     )
     completed_subgoals: List[int] = Field(
         default_factory=list,

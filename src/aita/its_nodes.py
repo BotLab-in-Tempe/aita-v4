@@ -22,7 +22,7 @@ from aita.utils import format_plan_md, with_error_escalation
 @with_error_escalation("context_gate")
 async def context_gate(
     state: AitaState, config: RunnableConfig, runtime: Runtime[Context]
-) -> Command[Literal["retriever", "evaluator", "dialogue_manager"]]:
+) -> Command[Literal["retriever", "evaluator"]]:
     configurable = Configuration.from_runnable_config(config)
     model = (
         init_chat_model(configurable_fields=("model", "max_tokens", "api_key"))
@@ -64,37 +64,17 @@ async def context_gate(
         [SystemMessage(content=prompt_content), *messages]
     )
 
-    from aita.state import ContextGateSignal
+    trace_entry = f"[Context Gate] {response.reasoning}\nNeed retrieval: {response.need_retrieval}"
 
-    if response.signal == ContextGateSignal.need_retrieval:
-        trace_entry = (
-            f"[Context Gate] {response.reasoning}\nSignal: {response.signal.value}"
-        )
+    if response.need_retrieval:
         return Command(
             goto="retriever",
-            update={
-                "trace": [trace_entry],
-            },
-        )
-    elif response.signal == ContextGateSignal.need_student_probe:
-        trace_entry = (
-            f"[Context Gate] {response.reasoning}\nSignal: {response.signal.value}"
-        )
-        return Command(
-            goto="dialogue_manager",
-            update={
-                "trace": [trace_entry],
-            },
+            update={"trace": [trace_entry]},
         )
     else:
-        trace_entry = (
-            f"[Context Gate] {response.reasoning}\nSignal: {response.signal.value}"
-        )
         return Command(
             goto="evaluator",
-            update={
-                "trace": [trace_entry],
-            },
+            update={"trace": [trace_entry]},
         )
 
 
@@ -137,10 +117,8 @@ async def evaluator(
         [SystemMessage(content=prompt_content), *messages]
     )
 
-    # Build trace entry with evaluator reasoning and signal
-    trace_entry = f"[Evaluator] {response.reasoning}\nSignal: {response.signal.value}"
+    trace_entry = f"[Evaluator] {response.reasoning}\nNeed plan: {response.need_plan}"
 
-    # Add subgoal completion info to trace if applicable
     if response.completed_subgoals:
         max_completed_index = max(response.completed_subgoals)
         new_cursor = max_completed_index + 1
@@ -149,18 +127,14 @@ async def evaluator(
         )
         trace_entry += f"\nCompleted subgoals: {completed_indices}"
 
-    update = {
-        "trace": [trace_entry],
-    }
+    update = {"trace": [trace_entry]}
 
     if response.completed_subgoals:
         max_completed_index = max(response.completed_subgoals)
         new_cursor = max_completed_index + 1
         update["plan_cursor"] = new_cursor
 
-    from aita.state import EvaluatorSignal
-
-    if response.signal == EvaluatorSignal.need_plan:
+    if response.need_plan:
         return Command(goto="planner", update=update)
     else:
         return Command(goto="dialogue_manager", update=update)

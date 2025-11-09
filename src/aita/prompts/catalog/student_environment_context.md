@@ -1,5 +1,7 @@
 The environment is a Docker container that contains all project data for the course CSE240.
 
+**Important Note:** This environment structure and the markdown instruction files (`project_instructions.md`, `level_instructions.md`) are provided specifically for you to retrieve context and answer student questions. Students do not have direct access to these instruction files in this format—they receive their project information differently. This documentation is for your reference only.
+
 **Project Structure:**
 - Each project has its own directory in the projects directory
 - Each project is divided into levels with numbered directories (01, 02, 03, etc.)

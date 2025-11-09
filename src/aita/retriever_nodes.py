@@ -21,6 +21,7 @@ from aita.utils import build_docker_env_for_user, with_error_escalation
 from aita.tools import make_execute_bash_tool
 from langchain.agents import create_agent
 from langchain_openai import ChatOpenAI
+from aita.utils import format_plan_md
 
 
 @with_error_escalation("probe_planner")
@@ -145,8 +146,16 @@ async def response_generator(
 
     probe_task = state.get("probe_task") or "No probe task"
 
+    plan = state.get("plan")
+    plan_cursor = state.get("plan_cursor", 0)
+    current_plan_text = (
+        format_plan_md(plan, title="Current Plan", plan_cursor=plan_cursor)
+        if plan and plan.subgoals
+        else "No plan"
+    )
+
     prompt_content = PROMPTS["response_generator_system_prompt"].content.format(
-        probe_task=probe_task, aita_trace=trace_text
+        probe_task=probe_task, aita_trace=trace_text, current_plan=current_plan_text
     )
 
     response: ResponseGeneratorOutput = await model.ainvoke(
