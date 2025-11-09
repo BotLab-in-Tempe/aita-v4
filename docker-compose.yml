@@ -29,12 +29,13 @@ services:
       - db
     networks:
       - aita-net
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - langfuse_default
 
 volumes:
   aita_db_data:
 
 networks:
   aita-net:
+    external: true
+  langfuse_default:
     external: true
