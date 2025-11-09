@@ -38,6 +38,7 @@ where = ["src"]
 
 [tool.setuptools.package-data]
 "*" = ["py.typed"]
+aita = ["prompts/catalog/*.md"]
 
 [tool.ruff]
 lint.select = [

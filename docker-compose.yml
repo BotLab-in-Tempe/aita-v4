@@ -1,0 +1,38 @@
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: aita
+    volumes:
+      - aita_db_data:/var/lib/postgresql/data
+    networks:
+      - aita-net
+
+  aita-v4:
+    build: .
+    container_name: aita-v4
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGHOST: db
+      PGPORT: 5432
+      PGDATABASE: aita
+    ports:
+      - "127.0.0.1:8001:8000"
+    depends_on:
+      - db
+    networks:
+      - aita-net
+
+volumes:
+  aita_db_data:
+
+networks:
+  aita-net:
+    external: true
