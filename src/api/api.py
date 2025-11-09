@@ -10,12 +10,13 @@ from contextlib import asynccontextmanager
 from aita.graph import make_graph, create_aita_graph
 from aita.logger import get_logger
 from langfuse.langchain import CallbackHandler
-
+from langfuse import get_client, propagate_attributes
 from dotenv import load_dotenv
 
 load_dotenv(override=True)
 
 logger = get_logger()
+langfuse = get_client()
 langfuse_handler = CallbackHandler()
 
 
@@ -102,9 +103,11 @@ async def chat(body: ChatRequest):
             ctx["project_id"] = body.project_id
         cfg = {"configurable": {"thread_id": body.session_id}, "recursion_limit": 25, "callbacks": [langfuse_handler]}
         preprocessed = preprocess_messages(body.messages)
-        result = await app.state.graph.ainvoke(
-            {"messages": preprocessed}, cfg, context=ctx
-        )
+        with langfuse.start_as_current_span(name="aita"):
+            with propagate_attributes(user_id=body.user_id):
+                result = await app.state.graph.ainvoke(
+                    {"messages": preprocessed}, cfg, context=ctx
+                )
         logger.info(f"Chat request completed - session_id={body.session_id}")
         return result
     except Exception as e:
