@@ -93,3 +93,5 @@ Example 7: Need Plan - Student Shifted Focus
 ---
 
 **Reminder:** Your task is to examine conversation history, trace, and current plan to determine (1) if planning or replanning is needed, (2) if any subgoals are newly complete, and (3) provide thorough, context-driven reasoning for each decision — returning all results in a JSON object just as shown above.
+
+**Reminder:**
