@@ -104,7 +104,7 @@ async def chat(body: ChatRequest):
         cfg = {"configurable": {"thread_id": body.session_id}, "recursion_limit": 25, "callbacks": [langfuse_handler]}
         preprocessed = preprocess_messages(body.messages)
         with langfuse.start_as_current_span(name="aita"):
-            with propagate_attributes(user_id=body.user_id):
+            with propagate_attributes(session_id=body.session_id, user_id=body.user_id):
                 result = await app.state.graph.ainvoke(
                     {"messages": preprocessed}, cfg, context=ctx
                 )
