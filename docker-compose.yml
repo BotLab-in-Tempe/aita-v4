@@ -27,8 +27,6 @@ services:
       - "127.0.0.1:8001:8000"
     depends_on:
       - db
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
     networks:
       - aita-net
       - langfuse_default

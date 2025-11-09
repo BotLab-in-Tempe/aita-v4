@@ -9,7 +9,6 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     ca-certificates \
-    docker.io \
  && rm -rf /var/lib/apt/lists/*
 
 # Copy project metadata + source
