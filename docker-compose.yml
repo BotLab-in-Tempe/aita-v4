@@ -27,6 +27,10 @@ services:
       - "127.0.0.1:8001:8000"
     depends_on:
       - db
+    volumes:
+      - /opt/aita/cse240/aita-sandbox:/opt/aita/cse240/aita-sandbox:ro
+      - /opt/data/cse240:/opt/data/cse240:ro
+      - /var/run/docker.sock:/var/run/docker.sock
     networks:
       - aita-net
       - langfuse_default
