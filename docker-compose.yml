@@ -29,6 +29,8 @@ services:
       - db
     networks:
       - aita-net
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
 volumes:
   aita_db_data:
