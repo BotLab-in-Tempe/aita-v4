@@ -32,7 +32,7 @@ services:
       - langfuse_default
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - /opt/aita/cse240/aita-sandbox:/opt/aita/cse240/aita-sandbox:ro
+      - /opt/aita/cse240/aita-sandbox:/opt/aita/cse240/aita-sandbox
       - /opt/data/cse240:/opt/data/cse240
 
 volumes:

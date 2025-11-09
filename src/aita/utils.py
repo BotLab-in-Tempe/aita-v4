@@ -68,7 +68,7 @@ async def build_docker_env_for_user(user_id: str) -> DockerEnvironment:
     run_args: list[str] = [
         "--rm",
         "-v",
-        f"{EXEC_PROJECTS_ROOT}:/workspace/projects:ro",
+        f"{EXEC_PROJECTS_ROOT}:/workspace/projects",
     ]
 
     # Walk the shared project tree and mount this user's snapshot into each level
