@@ -55,7 +55,12 @@ async def probe_planner(
         else "No previous environment context."
     )
 
-    prompt_content = PROMPTS["probe_planner_system_prompt"].content.format(
+    project_display = (
+        runtime.context.project_id if runtime.context.project_id else "unspecified"
+    )
+    context_header = f"**Session Context:**\n- Course: {runtime.context.course_code}\n- Project: {project_display}\n\n"
+
+    prompt_content = context_header + PROMPTS["probe_planner_system_prompt"].content.format(
         aita_trace=trace_text,
         student_environment_context=student_environment_context,
     )
@@ -100,7 +105,12 @@ async def cli_agent(
         else "No previous environment context."
     )
 
-    formatted_prompt = PROMPTS["cli_agent_system_prompt"].content.format(
+    project_display = (
+        runtime.context.project_id if runtime.context.project_id else "unspecified"
+    )
+    context_header = f"**Session Context:**\n- Course: {runtime.context.course_code}\n- Project: {project_display}\n\n"
+
+    formatted_prompt = context_header + PROMPTS["cli_agent_system_prompt"].content.format(
         probe_task=probe_task, student_environment_context=student_environment_context
     )
 
