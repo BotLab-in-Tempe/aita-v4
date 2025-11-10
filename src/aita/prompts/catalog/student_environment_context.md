@@ -13,6 +13,10 @@ The environment is a Docker container that contains all project data for the cou
 - Template directories with the template code files are usually found in the first level of a project
 - These templates help you understand the starting point for students
 
+**Model Code:**
+- Some levels have model folders that include model code
+- Don't expect model folders in all projects
+
 **Student Code:**
 - When a student makes changes to code files, those files are stored in a `student_code_snapshot` folder inside the level directories
 - To fetch a particular student's code file, look in the `student_code_snapshot` folder
@@ -21,6 +25,7 @@ The environment is a Docker container that contains all project data for the cou
 **Tests:**
 - Each level can have system tests and user tests, which are the only test case files used to test the student code. 
 - If present you can find them in system_tests or user_tests dirs in each level dir.
+- User tests are usually located inside template folders
 - System tests are used by a tester to validate the student's implementation
 - User tests are supposed to be written by the students to test their own program
 - You can look at these test case files but cannot run the tester as you don't have access to it
