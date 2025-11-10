@@ -190,14 +190,12 @@ async def planner(
     if not response.plan or not response.plan.subgoals:
         return {}
 
-    from aita.state import Plan, PlanPatch
+    from aita.state import Plan
 
     new_subgoals = response.plan.subgoals
 
-    if existing_plan and existing_plan.subgoals:
-        return {"plan": PlanPatch(from_index=plan_cursor, subgoals=new_subgoals)}
-    else:
-        return {"plan": Plan(subgoals=new_subgoals)}
+    # Always return a full Plan (replaces entire plan when replanning)
+    return {"plan": Plan(subgoals=new_subgoals), "plan_cursor": 0}
 
 
 @with_error_escalation("dialogue_manager")
