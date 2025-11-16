@@ -209,12 +209,9 @@ async def dialogue_manager(
         configurable_fields=("model", "max_completion_tokens", "temperature", "api_key")
     ).with_config(
         {
-            # "model": "openai:gpt-5.1-chat-latest",
-            "model": "openai:gpt-5.1",
-            # "max_completion_tokens": "1024",
-            # "temperature": 1,
-            "reasoning_effort": "low",
-            "verbosity": "medium",
+            "model": "openai:gpt-5.1-chat-latest",
+            "max_completion_tokens": "1024",
+            "temperature": 1,
             "api_key": config.get("api_key"),
             "tags": ["langsmith:nostream"],
         }
@@ -233,12 +230,7 @@ async def dialogue_manager(
         runtime.context.project_id if runtime.context.project_id else "unspecified"
     )
     
-    student_env_summary = (
-        "Students work in isolated VS Code containers on pwn.college. Template files and model binaries (modelgood/modelbad) are pre-loaded. Testing uses system_tests and user_tests."
-        if "student_environment_context" in PROMPTS
-        and PROMPTS["student_environment_context"].content.strip()
-        else ""
-    )
+    student_env_summary = PROMPTS["student_environment_context"].content.strip() if "student_environment_context" in PROMPTS else ""
     
     context_header = f"**Session Context:**\n- Course: {runtime.context.course_code}\n- Project: {project_display}"
     if student_env_summary:

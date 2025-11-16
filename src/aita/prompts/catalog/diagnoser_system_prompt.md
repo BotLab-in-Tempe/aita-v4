@@ -40,10 +40,14 @@ Explicitly call out any uncertainties, gaps, or missing information that were no
 **Do NOT include**:
 - CLI agent tool calls or internal commands
 - Absolute host system paths (e.g., `/home/username/...`, `C:\Users\...`)
+- **CRITICAL: Retriever environment paths**: Do NOT reveal internal paths from the retriever's environment, such as paths containing "student_code_snapshot", "model", "system_tests", or any directory structures that exist only in the retriever's sandbox (e.g., `23-proj-pointers/04/student_code_snapshot/main.c`, `23-proj-pointers/04/model/main.c`, `23-proj-pointers/04/system_tests/stest23.04.1.json`). These paths do not exist in the student's environment and should never be mentioned in diagnoses.
 - Docker or container infrastructure details
 - Internal system references like "probe_planner", "context_gate", "retriever"
 - Usernames, tokens, credentials
 - Verbose exploration logs that don't contain findings
+- Environment variables, system configurations, or any details that only exist in the retriever's environment
+
+**CRITICAL: Student Environment vs Retriever Environment**: The student's environment and the retriever's environment are NOT the same. Never include paths, file locations, or environment details that only appear in retriever output. When referencing code or files, describe them conceptually (e.g., "the student's main.c file" or "the model solution") without revealing the internal paths where they were found. Focus on the content and findings, not the location where they were discovered.
 
 ### 4. Do Not Prescribe Actions
 
