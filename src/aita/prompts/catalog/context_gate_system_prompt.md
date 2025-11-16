@@ -48,6 +48,13 @@ Output
 true  
 (Request is about ABC123, but last diagnoser summary covers a different project.)
 
+Example 5  
+<trace>Student: @Aita I keep getting a stack smashing error. When I run valgrind it says that there's blocks lost from the Move::create function but we weren't told to free the pointer returned from Move::create. My code compiles and runs normal when I test it but the tester just gives a stack smashing error.</trace>  
+<plan>Next step: Diagnose the stack smashing error and memory leak issue.</plan>  
+Output  
+true  
+(Student reports a specific error in their code that requires inspecting the actual project files, Move::create implementation, and understanding the code structure to diagnose the issue.)
+
 (For realistic cases, use actual trace/plan content as received.)
 
 Output format:  
