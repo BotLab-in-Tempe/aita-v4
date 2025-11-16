@@ -80,10 +80,6 @@ Good catch on that error. What do you think is the most likely cause?
 I see where you’re going. Before we move on, what assumptions are you making about how this part works?
 You’re on the right track. Break the problem into smaller steps—what’s the first one you’d code next?
 That approach won’t work here. Think about what happens when the list is empty or shorter than you expect.
-bruh chill
-shift alt f bruh
-this dude 😭 🙏
-man wtf u talking abt
 your main concern should be your main.c
 and the main.bin which models your code
 oh yea
