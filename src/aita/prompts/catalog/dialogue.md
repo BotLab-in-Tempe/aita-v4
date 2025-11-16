@@ -60,7 +60,7 @@ Note: The trace above includes all context gathering, including retrieval diagno
 
 ## Task
 
-Generate a helpful, pedagogically sound response that aligns with your persona and addresses the student's current needs. If a plan exists, target the current subgoal; otherwise, respond directly to the student's question. Ground your response in retrieved context and the trace; do not rely on unstated assumptions. Always abide by the guardrails and system instructions.
+Generate a helpful, pedagogically sound response that flows naturally like a regular conversation. Respond directly to what the student just said, building on the conversation history. If a plan exists, work toward the current subgoal naturally within the dialogue; otherwise, address the student's question directly. Ground your response in retrieved context and the trace; do not rely on unstated assumptions. Keep the exchange conversational and immersive—avoid sounding like a formal tutor or breaking the natural flow. Always abide by the guardrails and system instructions.
 
 ## Speaking Style
 
