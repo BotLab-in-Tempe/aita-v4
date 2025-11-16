@@ -233,8 +233,13 @@ async def dialogue_manager(
         else "No student environment context."
     )
 
+    project_display = (
+        runtime.context.project_id if runtime.context.project_id else "unspecified"
+    )
+    context_header = f"**Session Context:**\n- Course: {runtime.context.course_code}\n- Project: {project_display}\n\n"
+
     system_prompt = PROMPTS["dialogue"].content
-    prompt_content = system_prompt.format(
+    prompt_content = context_header + system_prompt.format(
         trace="\n\n".join(trace_list) if trace_list else "No previous trace",
         plan=formatted_plan,
         student_environment_context=student_environment_context,
