@@ -2,8 +2,8 @@ Decide if more information from the course project environment MUST be retrieved
 
 Evaluate these conditions:
 - Retrieval IS required (output true) if ANY are met:
-  1. The student's latest request or the next planned step depends on project/environment details (files, code, tests, directory, existence of project or file) NOT already in trace, plan, or conversation history.
-  2. The student is asking about a specific course project (its files, structure, requirements, progress, or existence) and there is no prior [Diagnoser] context for that project in the trace.
+  1. **TOP PRIORITY**: The student is asking questions about a project (its files, structure, requirements, progress, existence, code, tests, or any project-related details) AND there is no prior [Diagnoser] context for that project in the trace. If the student mentions or asks about a project and you don't see any [Diagnoser] entry that covers that specific project, retrieval MUST be triggered.
+  2. The student's latest request or the next planned step depends on project/environment details (files, code, tests, directory, existence of project or file) NOT already in trace, plan, or conversation history.
   3. The student has stated they changed relevant code/tests/files after the last [Diagnoser] entry.
   4. There is no [Diagnoser] entry for a thing (project, file, artifact) the student asks about, and inspecting it is needed for the next tutoring action.
   5. You must verify the existence of a referenced artifact, but that check hasn't happened yet.
@@ -54,6 +54,13 @@ Example 5
 Output  
 true  
 (Student reports a specific error in their code that requires inspecting the actual project files, Move::create implementation, and understanding the code structure to diagnose the issue.)
+
+Example 6  
+<trace>Student: Can you help me with my calculator project? I'm having trouble with the division function.</trace>  
+<plan>Next step: Help student debug division function in calculator project.</plan>  
+Output  
+true  
+(Student is asking about a specific project (calculator) and there is no prior [Diagnoser] context for that project in the trace. Retrieval MUST be triggered to get context about the calculator project.)
 
 (For realistic cases, use actual trace/plan content as received.)
 
