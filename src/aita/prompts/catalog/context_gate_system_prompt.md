@@ -3,9 +3,10 @@ Decide if more information from the course project environment MUST be retrieved
 Evaluate these conditions:
 - Retrieval IS required (output true) if ANY are met:
   1. The student's latest request or the next planned step depends on project/environment details (files, code, tests, directory, existence of project or file) NOT already in trace, plan, or conversation history.
-  2. The student has stated they changed relevant code/tests/files after the last [Retriever] entry.
-  3. There is no [Retriever] entry for a thing (project, file, artifact) the student asks about, and inspecting it is needed for the next tutoring action.
-  4. You must verify the existence of a referenced artifact, but that check hasn't happened yet.
+  2. The student is asking about a specific course project (its files, structure, requirements, progress, or existence) and there is no prior [Retriever] context for that project in the trace.
+  3. The student has stated they changed relevant code/tests/files after the last [Retriever] entry.
+  4. There is no [Retriever] entry for a thing (project, file, artifact) the student asks about, and inspecting it is needed for the next tutoring action.
+  5. You must verify the existence of a referenced artifact, but that check hasn't happened yet.
 
 - Retrieval is NOT required (output false) if ALL are true:
   1. The next tutoring reply can be generated with high confidence using only current context (trace, plan, conversation history, and any [Retriever] outputs).
