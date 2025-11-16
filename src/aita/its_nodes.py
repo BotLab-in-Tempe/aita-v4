@@ -211,7 +211,7 @@ async def dialogue_manager(
         {
             "model": "openai:gpt-5.1-chat-latest",
             "max_completion_tokens": "1024",
-            "temperature": 0.8,
+            "temperature": 1,
             "api_key": config.get("api_key"),
             "tags": ["langsmith:nostream"],
         }
