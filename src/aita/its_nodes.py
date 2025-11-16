@@ -226,10 +226,18 @@ async def dialogue_manager(
         else "No plan"
     )
 
+    student_environment_context = (
+        PROMPTS["student_environment_context"].content
+        if "student_environment_context" in PROMPTS
+        and PROMPTS["student_environment_context"].content.strip()
+        else "No student environment context."
+    )
+
     system_prompt = PROMPTS["dialogue"].content
     prompt_content = system_prompt.format(
         trace="\n\n".join(trace_list) if trace_list else "No previous trace",
         plan=formatted_plan,
+        student_environment_context=student_environment_context,
     )
 
     messages = state.get("messages", [])[-6:]  # Last 3 turns

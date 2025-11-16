@@ -1,31 +1,29 @@
-The environment is a Docker container that contains all project data for the course CSE240.
+Students use pwn.college to access their coding environment and work on course projects.
 
-**Important Note:** This environment structure and the markdown instruction files (`project_instructions.md`, `level_instructions.md`) are provided specifically for you to retrieve context and answer student questions. Students do not have direct access to these instruction files in this format—they receive their project information differently. This documentation is for your reference only.
-
-**Project Structure:**
-- Each project has its own directory in the projects directory
-- Each project is divided into levels with numbered directories (01, 02, 03, etc.)
-- Projects have main instructions (`project_instructions.md`) and each level has its own instructions (`level_instructions.md`)
-- **Note**: `project_instructions.md` sometimes only provides a high-level introduction to the project. If that's not enough information to answer the question, you should examine the `level_instructions.md` files in each level directory until you find sufficient details about requirements, dependencies, grading criteria, or other specifics
+**Student Environment:**
+- Students work in a VS Code black box container
+- All template files and project files are pre-loaded into their container
+- Students cannot copy code in or out from the container
+- The container is isolated and designed to prevent code transfer
 
 **Template Code:**
-- Students usually receive a template for a project with starter files
+- Students receive template files with starter code for each project
 - Template directories with the template code files are usually found in the first level of a project
-- These templates help you understand the starting point for students
+- These templates provide the starting point for student implementations
 
-**Model Code:**
-- Some levels have model folders that include model code
-- Don't expect model folders in all projects
+**Model Binaries:**
+- Students receive `modelgood` and `modelbad` binaries in their container
+- `modelbad` is compiled for students at challenge initialization—they don't need to compile it themselves
+- `modelbad` is mostly used by the tester to check if user tests fail on the bad model, which is expected for good user tests
+- `modelgood` is the binary of the expected program that should work correctly
+- `modelgood` is used by the tester to check user tests
+- Students can also use `modelgood` to see how the final program should work
 
-**Student Code:**
-- When a student makes changes to code files, those files are stored in a `student_code_snapshot` folder inside the level directories
-- To fetch a particular student's code file, look in the `student_code_snapshot` folder
-- Student code can be in any level depending on when they last updated it
-
-**Tests:**
-- Each level can have system tests and user tests, which are the only test case files used to test the student code. 
-- If present you can find them in system_tests or user_tests dirs in each level dir.
-- User tests are usually located inside template folders
+**Testing and Progression:**
+- Students run test cases using a tester program to get the flag
+- Each level can have system tests and user tests, which are the only test case files used to test the student code
+- If present, you can find them in system_tests or user_tests dirs in each level dir
 - System tests are used by a tester to validate the student's implementation
 - User tests are supposed to be written by the students to test their own program
-- You can look at these test case files but cannot run the tester as you don't have access to it
+- After successfully completing a level (getting the flag), students can move on to the next level
+

@@ -50,10 +50,10 @@ async def probe_planner(
     trace = state.get("trace", [])
     trace_text = "\n".join(trace) if trace else "No trace yet"
 
-    student_environment_context = (
-        PROMPTS["student_environment_context"].content
-        if "student_environment_context" in PROMPTS
-        and PROMPTS["student_environment_context"].content.strip()
+    sandbox_environment_context = (
+        PROMPTS["sandbox_environment_context"].content
+        if "sandbox_environment_context" in PROMPTS
+        and PROMPTS["sandbox_environment_context"].content.strip()
         else "No previous environment context."
     )
 
@@ -74,7 +74,7 @@ async def probe_planner(
         "probe_planner_system_prompt"
     ].content.format(
         aita_trace=trace_text,
-        student_environment_context=student_environment_context,
+        sandbox_environment_context=sandbox_environment_context,
         current_plan=formatted_plan,
     )
 
@@ -117,10 +117,10 @@ async def cli_agent(
 
     # Get probe_task from probe_planner
     probe_task = state.get("probe_task") or "No probe task"
-    student_environment_context = (
-        PROMPTS["student_environment_context"].content
-        if "student_environment_context" in PROMPTS
-        and PROMPTS["student_environment_context"].content.strip()
+    sandbox_environment_context = (
+        PROMPTS["sandbox_environment_context"].content
+        if "sandbox_environment_context" in PROMPTS
+        and PROMPTS["sandbox_environment_context"].content.strip()
         else "No previous environment context."
     )
 
@@ -132,7 +132,7 @@ async def cli_agent(
     formatted_prompt = context_header + PROMPTS[
         "cli_agent_system_prompt"
     ].content.format(
-        probe_task=probe_task, student_environment_context=student_environment_context
+        probe_task=probe_task, sandbox_environment_context=sandbox_environment_context
     )
 
     agent = create_agent(
@@ -219,15 +219,15 @@ async def cli_trace_summarizer(
         }
     )
 
-    student_environment_context = (
-        PROMPTS["student_environment_context"].content
-        if "student_environment_context" in PROMPTS
-        and PROMPTS["student_environment_context"].content.strip()
+    sandbox_environment_context = (
+        PROMPTS["sandbox_environment_context"].content
+        if "sandbox_environment_context" in PROMPTS
+        and PROMPTS["sandbox_environment_context"].content.strip()
         else "No previous environment context."
     )
 
     prompt_content = PROMPTS["cli_trace_summarizer_system_prompt"].content.format(
-        environment_context=student_environment_context
+        environment_context=sandbox_environment_context
     )
 
     cli_trace = state.get("cli_trace", []) or []

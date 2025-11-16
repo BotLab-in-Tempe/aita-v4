@@ -83,6 +83,10 @@ Note: The trace above includes all context gathering, including retrieval diagno
 {plan}
 </plan>
 
+<student_environment_context>
+{student_environment_context}
+</student_environment_context>
+
 ---
 
 ## Task
