@@ -20,7 +20,7 @@ Students use pwn.college to access their coding environment and work on course p
 - Students can also use `modelgood` to see how the final program should work
 
 **Testing and Progression:**
-- Students run test cases using a tester program to get the flag
+- Students run test cases using a tester program to get the flag, this program runns all the testcases at once and stops at the failing testcase. They can run it using `tester` cmd in their terminal.
 - Each level can have system tests and user tests, which are the only test case files used to test the student code
 - If present, you can find them in system_tests or user_tests dirs in each level dir
 - System tests are used by a tester to validate the student's implementation
