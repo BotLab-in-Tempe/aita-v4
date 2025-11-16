@@ -226,23 +226,26 @@ async def dialogue_manager(
         else "No plan"
     )
 
-    student_environment_context = (
-        PROMPTS["student_environment_context"].content
-        if "student_environment_context" in PROMPTS
-        and PROMPTS["student_environment_context"].content.strip()
-        else "No student environment context."
-    )
-
     project_display = (
         runtime.context.project_id if runtime.context.project_id else "unspecified"
     )
-    context_header = f"**Session Context:**\n- Course: {runtime.context.course_code}\n- Project: {project_display}\n\n"
+    
+    student_env_summary = (
+        "Students work in isolated VS Code containers on pwn.college. Template files and model binaries (modelgood/modelbad) are pre-loaded. Testing uses system_tests and user_tests."
+        if "student_environment_context" in PROMPTS
+        and PROMPTS["student_environment_context"].content.strip()
+        else ""
+    )
+    
+    context_header = f"**Session Context:**\n- Course: {runtime.context.course_code}\n- Project: {project_display}"
+    if student_env_summary:
+        context_header += f"\n- Environment: {student_env_summary}"
+    context_header += "\n\n"
 
     system_prompt = PROMPTS["dialogue"].content
     prompt_content = context_header + system_prompt.format(
         trace="\n\n".join(trace_list) if trace_list else "No previous trace",
         plan=formatted_plan,
-        student_environment_context=student_environment_context,
     )
 
     messages = state.get("messages", [])[-6:]  # Last 3 turns
