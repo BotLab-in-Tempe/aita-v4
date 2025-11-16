@@ -25,13 +25,14 @@ async def context_gate(
 ) -> Command[Literal["retriever", "evaluator"]]:
     configurable = Configuration.from_runnable_config(config)
     model = (
-        init_chat_model(configurable_fields=("model", "max_tokens", "api_key"))
+        init_chat_model(configurable_fields=("model", "reasoning_effort", "verbosity", "api_key"))
         .with_structured_output(ContextGateOutput, method="function_calling")
         .with_retry(stop_after_attempt=configurable.max_structured_output_retries)
         .with_config(
             {
-                "model": configurable.main_model,
-                "max_tokens": configurable.small_tokens,
+                "model": "openai:gpt-5.1",
+                "reasoning_effort": "low",
+                "verbosity": "low",
                 "api_key": config.get("api_key"),
                 "tags": ["langsmith:nostream"],
             }
@@ -64,17 +65,13 @@ async def context_gate(
         [SystemMessage(content=prompt_content), *messages]
     )
 
-    trace_entry = f"[Context Gate] {response.reasoning}\nNeed retrieval: {response.need_retrieval}"
-
     if response.need_retrieval:
         return Command(
-            goto="retriever",
-            update={"trace": [trace_entry]},
+            goto="retriever"
         )
     else:
         return Command(
-            goto="evaluator",
-            update={"trace": [trace_entry]},
+            goto="evaluator"
         )
 
 
@@ -84,13 +81,14 @@ async def evaluator(
 ) -> Command[Literal["planner", "dialogue_manager"]]:
     configurable = Configuration.from_runnable_config(config)
     model = (
-        init_chat_model(configurable_fields=("model", "max_tokens", "api_key"))
+        init_chat_model(configurable_fields=("model", "reasoning_effort", "verbosity", "api_key"))
         .with_structured_output(EvaluatorOutput, method="function_calling")
         .with_retry(stop_after_attempt=configurable.max_structured_output_retries)
         .with_config(
             {
-                "model": configurable.main_model,
-                "max_tokens": configurable.small_tokens,
+                "model": "openai:gpt-5.1",
+                "reasoning_effort": "low",
+                "verbosity": "low",
                 "api_key": config.get("api_key"),
                 "tags": ["langsmith:nostream"],
             }
@@ -150,13 +148,14 @@ async def planner(
     # Configure model
     configurable = Configuration.from_runnable_config(config)
     model = (
-        init_chat_model(configurable_fields=("model", "max_tokens", "api_key"))
+        init_chat_model(configurable_fields=("model", "reasoning_effort", "verbosity", "api_key"))
         .with_structured_output(PlannerOutput, method="function_calling")
         .with_retry(stop_after_attempt=configurable.max_structured_output_retries)
         .with_config(
             {
-                "model": configurable.main_model,
-                "max_tokens": configurable.large_tokens,
+                "model": "openai:gpt-5.1",
+                "reasoning_effort": "low",
+                "verbosity": "medium",
                 "api_key": config.get("api_key"),
                 "tags": ["langsmith:nostream"],
             }
@@ -207,11 +206,12 @@ async def dialogue_manager(
     """
     configurable = Configuration.from_runnable_config(config)
     model = init_chat_model(
-        configurable_fields=("model", "max_tokens", "api_key")
+        configurable_fields=("model", "max_completion_tokens", "temperature", "api_key")
     ).with_config(
         {
-            "model": configurable.main_model,
-            "max_tokens": configurable.large_tokens,
+            "model": "openai:gpt-5.1-chat-latest",
+            "max_completion_tokens": "1024",
+            "temperature": 1,
             "api_key": config.get("api_key"),
             "tags": ["langsmith:nostream"],
         }
@@ -261,11 +261,12 @@ async def summarize_trace(
         return {}
 
     model = init_chat_model(
-        configurable_fields=("model", "max_tokens", "api_key")
+        configurable_fields=("model", "reasoning_effort", "verbosity", "api_key")
     ).with_config(
         {
-            "model": configurable.small_model,
-            "max_tokens": configurable.medium_tokens,
+            "model": "openai:gpt-5.1",
+            "reasoning_effort": "low",
+            "verbosity": "medium",
             "api_key": config.get("api_key"),
             "tags": ["langsmith:nostream"],
         }

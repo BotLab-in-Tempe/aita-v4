@@ -67,11 +67,8 @@ class PlannerOutput(BaseModel):
 
 
 class ContextGateOutput(BaseModel):
-    reasoning: str = Field(
-        description="Step-by-step reasoning for the context assessment"
-    )
     need_retrieval: bool = Field(
-        description="Whether retrieval should be called to get more context"
+        description="Whether retrieval should be called to get more context. Output true if retrieval is required, false otherwise."
     )
 
 
@@ -90,10 +87,6 @@ class ProbePlannerOutput(BaseModel):
     probe_task: str = Field(
         description="The task to be completed to resolve the uncertainty"
     )
-
-
-class ResponseGeneratorOutput(BaseModel):
-    response: str = Field(description="The response to the student's question")
 
 
 class AitaState(MessagesState):

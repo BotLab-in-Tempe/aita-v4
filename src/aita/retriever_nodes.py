@@ -12,7 +12,6 @@ from aita.state import (
     AitaState,
     Context,
     ProbePlannerOutput,
-    ResponseGeneratorOutput,
 )
 from aita.prompts import PROMPTS
 from aita.configuration import Configuration
@@ -31,13 +30,16 @@ async def probe_planner(
 
     configurable = Configuration.from_runnable_config(config)
     model = (
-        init_chat_model(configurable_fields=("model", "max_tokens", "api_key"))
+        init_chat_model(
+            configurable_fields=("model", "reasoning_effort", "verbosity", "api_key")
+        )
         .with_structured_output(ProbePlannerOutput, method="function_calling")
         .with_retry(stop_after_attempt=configurable.max_structured_output_retries)
         .with_config(
             {
-                "model": configurable.main_model,
-                "max_tokens": configurable.small_tokens,
+                "model": "openai:gpt-5.1",
+                "reasoning_effort": "low",
+                "verbosity": "medium",
                 "api_key": config.get("api_key"),
                 "tags": ["langsmith:nostream"],
             }
@@ -55,14 +57,25 @@ async def probe_planner(
         else "No previous environment context."
     )
 
+    plan = state.get("plan")
+    plan_cursor = state.get("plan_cursor", 0)
+    formatted_plan = (
+        format_plan_md(plan, title="Current Plan", plan_cursor=plan_cursor)
+        if plan and plan.subgoals
+        else "No plan"
+    )
+
     project_display = (
         runtime.context.project_id if runtime.context.project_id else "unspecified"
     )
     context_header = f"**Session Context:**\n- Course: {runtime.context.course_code}\n- Project: {project_display}\n\n"
 
-    prompt_content = context_header + PROMPTS["probe_planner_system_prompt"].content.format(
+    prompt_content = context_header + PROMPTS[
+        "probe_planner_system_prompt"
+    ].content.format(
         aita_trace=trace_text,
         student_environment_context=student_environment_context,
+        current_plan=formatted_plan,
     )
 
     messages = state.get("messages", [])[-6:]  # Last 3 turns
@@ -87,10 +100,16 @@ async def cli_agent(
 
     configurable = Configuration.from_runnable_config(config)
 
-    model = ChatOpenAI(
-        api_key=config.get("api_key"),
-        model="gpt-4o",
-        temperature=0,
+    model = init_chat_model(
+        configurable_fields=("model", "reasoning_effort", "verbosity", "api_key")
+    ).with_config(
+        {
+            "model": "openai:gpt-5.1",
+            "reasoning_effort": "low",
+            "verbosity": "medium",
+            "api_key": config.get("api_key"),
+            "tags": ["langsmith:nostream"],
+        }
     )
 
     docker_env = await build_docker_env_for_user(runtime.context.user_id)
@@ -110,7 +129,9 @@ async def cli_agent(
     )
     context_header = f"**Session Context:**\n- Course: {runtime.context.course_code}\n- Project: {project_display}\n\n"
 
-    formatted_prompt = context_header + PROMPTS["cli_agent_system_prompt"].content.format(
+    formatted_prompt = context_header + PROMPTS[
+        "cli_agent_system_prompt"
+    ].content.format(
         probe_task=probe_task, student_environment_context=student_environment_context
     )
 
@@ -121,62 +142,57 @@ async def cli_agent(
     result = await agent.ainvoke({"messages": state.get("cli_trace", [])})
 
     return Command(
-        goto="response_generator",
+        goto="diagnoser",
         update={
             "cli_trace": result.get("messages", []),
         },
     )
 
 
-@with_error_escalation("response_generator")
-async def response_generator(
+@with_error_escalation("diagnoser")
+async def diagnoser(
     state: AitaState, config: RunnableConfig, runtime: Runtime[Context]
 ) -> Command[Literal["__end__"]]:
-
-    configurable = Configuration.from_runnable_config(config)
-
-    model = (
-        init_chat_model(configurable_fields=("model", "max_tokens", "api_key"))
-        .with_structured_output(ResponseGeneratorOutput, method="function_calling")
-        .with_config(
-            {
-                "model": configurable.main_model,
-                "max_tokens": 4096,  # Enough for focused summaries with necessary content
-                "api_key": config.get("api_key"),
-                "tags": ["langsmith:nostream"],
-            }
-        )
+    model = init_chat_model(
+        configurable_fields=("model", "reasoning_effort", "verbosity", "api_key")
+    ).with_config(
+        {
+            "model": "openai:gpt-5.1",
+            "reasoning_effort": "low",
+            "verbosity": "medium",
+            "api_key": config.get("api_key"),
+            "tags": ["langsmith:nostream"],
+        }
     )
-
     cli_trace = state.get("cli_trace", []) or []
-
-    # Get the AITA trace
     trace = state.get("trace", [])
     trace_text = "\n".join(trace) if trace else "No trace yet"
-
-    probe_task = state.get("probe_task") or "No probe task"
-
     plan = state.get("plan")
     plan_cursor = state.get("plan_cursor", 0)
-    current_plan_text = (
+    formatted_plan = (
         format_plan_md(plan, title="Current Plan", plan_cursor=plan_cursor)
         if plan and plan.subgoals
         else "No plan"
     )
-
-    prompt_content = PROMPTS["response_generator_system_prompt"].content.format(
-        probe_task=probe_task, aita_trace=trace_text, current_plan=current_plan_text
+    project_display = (
+        runtime.context.project_id if runtime.context.project_id else "unspecified"
     )
-
-    response: ResponseGeneratorOutput = await model.ainvoke(
-        [SystemMessage(content=prompt_content)] + cli_trace
+    context_header = f"**Session Context:**\n- Course: {runtime.context.course_code}\n- Project: {project_display}\n\n"
+    prompt_content = context_header + PROMPTS["diagnoser_system_prompt"].content.format(
+        aita_trace=trace_text,
+        current_plan=formatted_plan,
     )
-
-    # Commented out cli_trace_summarizer for now - going directly to END
+    messages = state.get("messages", [])[-6:]
+    response = await model.ainvoke(
+        [SystemMessage(content=prompt_content), *messages, *cli_trace]
+    )
+    diagnosis_text = response.content if isinstance(response, AIMessage) else ""
+    trace_entry = f"[Diagnoser]\n\n{diagnosis_text}"
     return Command(
         goto="__end__",
         update={
-            "trace": [f"[Retriever] {response.response}"],
+            "trace": [trace_entry],
+            "cli_trace": {"type": "override", "value": []},
         },
     )
 

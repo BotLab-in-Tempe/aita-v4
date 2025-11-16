@@ -33,7 +33,7 @@ class Configuration(BaseModel):
 
     # Trace summarization
     trace_summarization_threshold: int = Field(
-        default=15,
+        default=10,
         description="Number of trace entries before summarization is triggered",
     )
 
