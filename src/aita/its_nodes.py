@@ -277,7 +277,7 @@ async def summarize_trace(
         {
             "model": "openai:gpt-5.1",
             "reasoning_effort": "low",
-            "verbosity": "medium",
+            "verbosity": "low",
             "api_key": config.get("api_key"),
             "tags": ["langsmith:nostream"],
         }
