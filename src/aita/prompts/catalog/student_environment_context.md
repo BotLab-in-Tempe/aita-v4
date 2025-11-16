@@ -24,6 +24,6 @@ Students use pwn.college to access their coding environment and work on course p
 - Each level can have system tests and user tests, which are the only test case files used to test the student code
 - System tests are used by a tester to validate the student's implementation
 - User tests are supposed to be written by the students to test their own program
-- capitalization almost never matters to the tester.
+- capitalization almost never matters to the tester, so if inputs or expected outputs not case matching is never ususally the issue.
 - After successfully completing a level (getting the flag), students can move on to the next level
 
