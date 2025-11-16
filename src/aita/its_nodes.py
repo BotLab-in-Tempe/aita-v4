@@ -209,9 +209,12 @@ async def dialogue_manager(
         configurable_fields=("model", "max_completion_tokens", "temperature", "api_key")
     ).with_config(
         {
-            "model": "openai:gpt-5.1-chat-latest",
-            "max_completion_tokens": "1024",
-            "temperature": 1,
+            # "model": "openai:gpt-5.1-chat-latest",
+            "model": "openai:gpt-5.1",
+            # "max_completion_tokens": "1024",
+            # "temperature": 1,
+            "reasoning_effort": "low",
+            "verbosity": "medium",
             "api_key": config.get("api_key"),
             "tags": ["langsmith:nostream"],
         }
