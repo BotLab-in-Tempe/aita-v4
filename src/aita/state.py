@@ -73,7 +73,6 @@ class ContextGateOutput(BaseModel):
 
 
 class EvaluatorOutput(BaseModel):
-    reasoning: str = Field(description="Step-by-step reasoning for evaluation")
     need_plan: bool = Field(
         description="Whether a tutoring plan is needed (initial planning or replanning)"
     )

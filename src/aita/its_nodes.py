@@ -115,22 +115,16 @@ async def evaluator(
         [SystemMessage(content=prompt_content), *messages]
     )
 
-    trace_entry = f"[Evaluator] {response.reasoning}\nNeed plan: {response.need_plan}"
+    plan_cursor_update: Optional[int] = None
 
     if response.completed_subgoals:
-        max_completed_index = max(response.completed_subgoals)
-        new_cursor = max_completed_index + 1
-        completed_indices = ", ".join(
-            str(i) for i in sorted(response.completed_subgoals)
-        )
-        trace_entry += f"\nCompleted subgoals: {completed_indices}"
+        completed_sorted = sorted(response.completed_subgoals)
+        plan_cursor_update = completed_sorted[-1] + 1
 
-    update = {"trace": [trace_entry]}
+    update = {}
 
-    if response.completed_subgoals:
-        max_completed_index = max(response.completed_subgoals)
-        new_cursor = max_completed_index + 1
-        update["plan_cursor"] = new_cursor
+    if plan_cursor_update is not None:
+        update["plan_cursor"] = plan_cursor_update
 
     if response.need_plan:
         return Command(goto="planner", update=update)
