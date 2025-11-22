@@ -78,7 +78,7 @@ async def context_gate(
 @with_error_escalation("evaluator")
 async def evaluator(
     state: AitaState, config: RunnableConfig, runtime: Runtime[Context]
-) -> Command[Literal["planner", "dialogue_manager"]]:
+) -> Command[Literal["planner", "dialogue_generator"]]:
     configurable = Configuration.from_runnable_config(config)
     model = (
         init_chat_model(configurable_fields=("model", "reasoning_effort", "verbosity", "api_key"))
@@ -104,7 +104,9 @@ async def evaluator(
     )
     trace_list = state.get("trace", []) or []
 
+    gaurdrails = PROMPTS["tutoring_gaurdrails"].content.strip() if "tutoring_gaurdrails" in PROMPTS else ""
     prompt_content = PROMPTS["evaluator_system_prompt"].content.format(
+        gaurdrails=gaurdrails,
         trace="\n\n".join(trace_list) if trace_list else "No previous evaluations",
         current_plan=formatted_plan,
     )
@@ -129,7 +131,7 @@ async def evaluator(
     if response.need_plan:
         return Command(goto="planner", update=update)
     else:
-        return Command(goto="dialogue_manager", update=update)
+        return Command(goto="dialogue_generator", update=update)
 
 
 @with_error_escalation("planner")
@@ -167,7 +169,9 @@ async def planner(
         if existing_plan and existing_plan.subgoals
         else "No plan"
     )
+    gaurdrails = PROMPTS["tutoring_gaurdrails"].content.strip() if "tutoring_gaurdrails" in PROMPTS else ""
     prompt_content = PROMPTS["planner_system_prompt"].content.format(
+        gaurdrails=gaurdrails,
         trace="\n\n".join(trace_list) if trace_list else "No previous trace",
         current_plan=formatted_plan,
     )
@@ -191,12 +195,12 @@ async def planner(
     return {"plan": Plan(subgoals=new_subgoals), "plan_cursor": 0}
 
 
-@with_error_escalation("dialogue_manager")
-async def dialogue_manager(
+@with_error_escalation("dialogue_generator")
+async def dialogue_generator(
     state: AitaState, config: RunnableConfig, runtime: Runtime[Context]
 ) -> Command[Literal["summarize_trace", "__end__"]]:
     """
-    Dialogue Manager - Generates the final response to the student.
+    Dialogue Generator - Generates the final response to the student.
     """
     configurable = Configuration.from_runnable_config(config)
     model = init_chat_model(
@@ -231,8 +235,10 @@ async def dialogue_manager(
         context_header += f"\n- Environment: {student_env_summary}"
     context_header += "\n\n"
 
-    system_prompt = PROMPTS["dialogue"].content
+    gaurdrails = PROMPTS["tutoring_gaurdrails"].content.strip() if "tutoring_gaurdrails" in PROMPTS else ""
+    system_prompt = PROMPTS["dialogue_generator"].content
     prompt_content = context_header + system_prompt.format(
+        gaurdrails=gaurdrails,
         trace="\n\n".join(trace_list) if trace_list else "No previous trace",
         plan=formatted_plan,
     )

@@ -47,10 +47,8 @@ Explicitly call out any uncertainties, gaps, or missing information that were no
 - Verbose exploration logs that don't contain findings
 - Environment variables, system configurations, or any details that only exist in the retriever's environment
 
-**CRITICAL: Student Environment vs Retriever Environment**: The student's environment and the retriever's environment are NOT the same. Never include paths, file locations, or environment details that only appear in retriever output. When referencing code or files, describe them conceptually (e.g., "the student's main.c file" or "the model solution") without revealing the internal paths where they were found. Focus on the content and findings, not the location where they were discovered.
-
 ### 4. Do Not Prescribe Actions
-
+ **CRITICAL: Student Environment vs Retriever Environment**: The student's environment and the retriever's environment are NOT the same. Never include paths, file locations, or environment details that only appear in retriever output. When referencing code or files, describe them conceptually (e.g., "the student's main.c file" or "the model solution") without revealing the internal paths where they were found. Focus on the content and findings, not the location where they were discovered.
 **CRITICAL**: Do NOT output recommendations, next steps, or instructions for the tutoring system. Only describe what you found and what the issue is—let the tutoring system decide how to proceed.
 
 ## Output Format

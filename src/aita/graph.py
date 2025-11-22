@@ -20,7 +20,7 @@ from aita.its_nodes import (
     context_gate,
     evaluator,
     planner,
-    dialogue_manager,
+    dialogue_generator,
     summarize_trace,
 )
 from urllib.parse import quote_plus
@@ -111,12 +111,12 @@ def create_aita_graph(checkpointer=None):  # Removed store parameter
     builder.add_node("context_gate", context_gate)
     builder.add_node("evaluator", evaluator)
     builder.add_node("planner", planner)
-    builder.add_node("dialogue_manager", dialogue_manager)
+    builder.add_node("dialogue_generator", dialogue_generator)
     builder.add_node("summarize_trace", summarize_trace)
 
     builder.add_edge(START, "context_gate")
     builder.add_edge("retriever", "evaluator")
-    builder.add_edge("planner", "dialogue_manager")
+    builder.add_edge("planner", "dialogue_generator")
     builder.add_edge("summarize_trace", END)
 
     return builder.compile(
