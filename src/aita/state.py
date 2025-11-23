@@ -47,6 +47,26 @@ class EvaluatorOutput(BaseModel):
         default_factory=list,
         description="Indexes of subgoals that are now complete (empty list if none completed)",
     )
+    escalate: bool = Field(
+        default=False,
+        description="Whether the situation should be escalated to human support (TAs/instructors).",
+    )
+    message: str = Field(
+        default="",
+        description=(
+            "A short, internal system message summarizing the evaluator's decision, "
+            "next suggested move, or escalation note. This is logged and may be surfaced "
+            "to other nodes, but is not shown verbatim to the student."
+        ),
+    )
+    should_respond: bool = Field(
+        default=True,
+        description=(
+            "Whether the tutor should generate a reply in this turn. "
+            "False when silence or no direct response is appropriate (e.g., "
+            "waiting for student work, off-target chatter, or multi-party side talk)."
+        ),
+    )
 
 
 class ProbePlannerOutput(BaseModel):
@@ -59,3 +79,5 @@ class AitaState(MessagesState):
     cli_trace: Annotated[list[AnyMessage], override_reducer] = []
     plan: Annotated[Optional[List[str]], override_reducer] = None
     probe_task: Optional[str] = None
+    escalate: Annotated[Optional[bool], override_reducer] = None
+    should_respond: Annotated[Optional[bool], override_reducer] = None

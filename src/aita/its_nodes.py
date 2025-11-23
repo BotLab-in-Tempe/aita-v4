@@ -77,7 +77,7 @@ async def evaluator(
         .with_config(
             {
                 "model": "openai:gpt-5.1",
-                "reasoning_effort": "low",
+                "reasoning_effort": "medium",
                 "verbosity": "low",
                 "api_key": config.get("api_key"),
                 "tags": ["langsmith:nostream"],
@@ -92,8 +92,15 @@ async def evaluator(
         if "tutoring_gaurdrails" in PROMPTS
         else ""
     )
+    tutoring_philosophy = (
+        PROMPTS["tutoring_philosophy"].content.strip()
+        if "tutoring_philosophy" in PROMPTS
+        else ""
+    )
     prompt_content = PROMPTS["evaluator_system_prompt"].content.format(
-        gaurdrails=gaurdrails, plan="\n\n".join(plan) if plan else "No plan"
+        gaurdrails=gaurdrails,
+        tutoring_philosophy=tutoring_philosophy,
+        plan="\n\n".join(plan) if plan else "No plan",
     )
 
     messages = state.get("messages", [])
@@ -102,8 +109,20 @@ async def evaluator(
         [SystemMessage(content=prompt_content), *messages]
     )
 
-    update = {}
-    new_messages = []
+    update: Dict[str, Any] = {}
+    new_messages: list[Any] = []
+
+    # Track evaluator control flags in state for downstream nodes
+    update["escalate"] = {
+        "type": "override",
+        "value": response.escalate,
+    }
+    update["should_respond"] = {
+        "type": "override",
+        "value": response.should_respond,
+    }
+
+    # Handle completed subgoals by trimming the plan queue
     if response.completed_subgoals and plan:
         completed_sorted = sorted(response.completed_subgoals, reverse=True)
         updated_plan = list(plan)
@@ -117,7 +136,14 @@ async def evaluator(
                 )
         update["plan"] = updated_plan
 
-    update["messages"] = new_messages
+    # Log evaluator's internal decision message, if provided
+    if response.message:
+        new_messages.append(
+            SystemMessage(content=f"[Evaluator] {response.message}")
+        )
+
+    if new_messages:
+        update["messages"] = new_messages
 
     if response.need_plan:
         return Command(goto="planner", update=update)
@@ -158,8 +184,15 @@ async def planner(
         if "tutoring_gaurdrails" in PROMPTS
         else ""
     )
+    tutoring_philosophy = (
+        PROMPTS["tutoring_philosophy"].content.strip()
+        if "tutoring_philosophy" in PROMPTS
+        else ""
+    )
     prompt_content = PROMPTS["planner_system_prompt"].content.format(
-        gaurdrails=gaurdrails, plan="\n\n".join(plan) if plan else "No plan"
+        gaurdrails=gaurdrails,
+        tutoring_philosophy=tutoring_philosophy,
+        plan="\n\n".join(plan) if plan else "No plan",
     )
 
     messages = state.get("messages", [])
@@ -223,18 +256,29 @@ async def dialogue_generator(
         if "tutoring_gaurdrails" in PROMPTS
         else ""
     )
+    tutoring_philosophy = (
+        PROMPTS["tutoring_philosophy"].content.strip()
+        if "tutoring_philosophy" in PROMPTS
+        else ""
+    )
     system_prompt = PROMPTS["dialogue_generator"].content
     prompt_content = context_header + system_prompt.format(
         gaurdrails=gaurdrails,
+        tutoring_philosophy=tutoring_philosophy,
         plan="\n\n".join(plan) if plan else "No plan",
     )
 
     messages = state.get("messages", [])
-
-    response = await model.ainvoke([SystemMessage(content=prompt_content), *messages])
+    should_respond = state.get("evaluator_should_respond", True)
 
     threshold = configurable.message_summarization_threshold
     next_node = "summarize_messages" if len(messages) >= threshold else "__end__"
+
+    # If evaluator indicates no response is needed, skip generation and just continue flow
+    if not should_respond:
+        return Command(goto=next_node, update={})
+
+    response = await model.ainvoke([SystemMessage(content=prompt_content), *messages])
 
     return Command(
         goto=next_node,
