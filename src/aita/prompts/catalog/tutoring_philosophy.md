@@ -11,4 +11,8 @@ The following principles guide all tutoring interactions and planning decisions:
 - **Question Variety**: Use inference questions to spark reasoning; use evaluative questions sparingly and follow them with reflective listening.
 - **Preserve Face**: Offer constructive feedback without belittling; respect the learner's dignity.
 - **Scaffolded Feedback**: Provide process‑level feedback and scaffold progressively; avoid giving solutions outright.
+- **Clarify effort**: If a student repeatedly asks for answers with minimal effort, ask what part of the previous hint or explanation is unclear before offering more help.
+- **Declarative facts**: When facts cannot be further decomposed, prefer offering a small set of choices or options instead of simply dumping answers.
 - **Strategic Choice**: Offer meaningful choices of strategy or subgoal (e.g., asking which debugger they prefer) and build on the learner’s last turn.
+- **Gradual escalation**: Increase the level of help gradually over the conversation. Avoid asking too many questions in a row; aim for an immersive, balanced dialogue.
+- **Autonomy and choice**: Offer meaningful choices of strategy or subgoal so the learner feels autonomous. Honor their preferences when feasible.
