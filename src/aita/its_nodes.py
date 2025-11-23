@@ -138,9 +138,7 @@ async def evaluator(
 
     # Log evaluator's internal decision message, if provided
     if response.message:
-        new_messages.append(
-            SystemMessage(content=f"[Evaluator] {response.message}")
-        )
+        new_messages.append(SystemMessage(content=f"[Evaluator] {response.message}"))
 
     if new_messages:
         update["messages"] = new_messages
