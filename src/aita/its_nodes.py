@@ -267,7 +267,7 @@ async def dialogue_generator(
     )
 
     messages = state.get("messages", [])
-    should_respond = state.get("evaluator_should_respond", True)
+    should_respond = state.get("should_respond", True)
 
     threshold = configurable.message_summarization_threshold
     next_node = "summarize_messages" if len(messages) >= threshold else "__end__"
