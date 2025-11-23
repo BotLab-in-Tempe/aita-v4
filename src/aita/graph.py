@@ -21,7 +21,7 @@ from aita.its_nodes import (
     evaluator,
     planner,
     dialogue_generator,
-    summarize_trace,
+    summarize_messages,
 )
 from urllib.parse import quote_plus
 from psycopg_pool import AsyncConnectionPool
@@ -112,12 +112,12 @@ def create_aita_graph(checkpointer=None):  # Removed store parameter
     builder.add_node("evaluator", evaluator)
     builder.add_node("planner", planner)
     builder.add_node("dialogue_generator", dialogue_generator)
-    builder.add_node("summarize_trace", summarize_trace)
+    builder.add_node("summarize_messages", summarize_messages)
 
     builder.add_edge(START, "context_gate")
     builder.add_edge("retriever", "evaluator")
     builder.add_edge("planner", "dialogue_generator")
-    builder.add_edge("summarize_trace", END)
+    builder.add_edge("summarize_messages", END)
 
     return builder.compile(
         name="aita", checkpointer=checkpointer

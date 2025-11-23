@@ -26,43 +26,10 @@ def override_reducer(current_value, new_value):
         return operator.add(current_value, new_value)
 
 
-class SubGoal(BaseModel):
-    subgoal: str = Field(description="The sub-goal to be completed")
-    success_predicate: str = Field(
-        description="The predicate that defines whether the sub-goal is successful/satisfied"
-    )
-
-
-class Plan(BaseModel):
-    subgoals: List[SubGoal] = Field(
-        default_factory=list,
-        description="The list of sub-goals to be completed to resolve the diagnosis",
-    )
-
-
-class PlanPatch(BaseModel):
-    """Value you write to state['plan'] to replace from an index onward."""
-
-    from_index: int = 0
-    subgoals: List[SubGoal] = Field(default_factory=list)
-
-
-def plan_splice(prev: Optional[Plan], patch: Plan | PlanPatch | dict | None) -> Plan:
-    prev_list: List[SubGoal] = [] if prev is None else list(prev.subgoals)
-    if not patch:
-        return Plan(subgoals=prev_list)
-    # If a full Plan is passed, replace entirely
-    if isinstance(patch, Plan):
-        return patch
-    if isinstance(patch, dict):
-        patch = PlanPatch(**patch)
-    idx = max(0, min(patch.from_index, len(prev_list)))
-    return Plan(subgoals=prev_list[:idx] + list(patch.subgoals))
-
-
 class PlannerOutput(BaseModel):
-    plan: Optional[Plan] = Field(
-        default=None, description="The plan to resolve the diagnosis"
+    plan: Optional[List[str]] = Field(
+        default=None,
+        description="The list of sub-goals to be completed to resolve the diagnosis",
     )
 
 
@@ -89,8 +56,6 @@ class ProbePlannerOutput(BaseModel):
 
 
 class AitaState(MessagesState):
-    trace: Annotated[list[str], override_reducer] = []
     cli_trace: Annotated[list[AnyMessage], override_reducer] = []
-    plan: Annotated[Optional[Plan], plan_splice] = None
-    plan_cursor: int = 0
+    plan: Annotated[Optional[List[str]], override_reducer] = None
     probe_task: Optional[str] = None

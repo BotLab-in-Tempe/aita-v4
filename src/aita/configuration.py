@@ -32,9 +32,9 @@ class Configuration(BaseModel):
     max_structured_output_retries: int = 3
 
     # Trace summarization
-    trace_summarization_threshold: int = Field(
-        default=10,
-        description="Number of trace entries before summarization is triggered",
+    message_summarization_threshold: int = Field(
+        default=15,
+        description="Number of messages before summarization is triggered",
     )
 
     log_level: str = Field(

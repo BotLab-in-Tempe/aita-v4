@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from typing import Any, Dict, Literal, Optional
+from typing import Any, Dict, Literal
 
 from langgraph.types import Command
 from langgraph.runtime import Runtime
-from langchain_core.messages import SystemMessage, HumanMessage
+from langchain_core.messages import SystemMessage
 from langchain_core.runnables import RunnableConfig
 from langchain.chat_models import init_chat_model
 
@@ -16,7 +16,7 @@ from aita.state import (
     EvaluatorOutput,
     PlannerOutput,
 )
-from aita.utils import format_plan_md, with_error_escalation
+from aita.utils import with_error_escalation
 
 
 @with_error_escalation("context_gate")
@@ -25,7 +25,9 @@ async def context_gate(
 ) -> Command[Literal["retriever", "evaluator"]]:
     configurable = Configuration.from_runnable_config(config)
     model = (
-        init_chat_model(configurable_fields=("model", "reasoning_effort", "verbosity", "api_key"))
+        init_chat_model(
+            configurable_fields=("model", "reasoning_effort", "verbosity", "api_key")
+        )
         .with_structured_output(ContextGateOutput, method="function_calling")
         .with_retry(stop_after_attempt=configurable.max_structured_output_retries)
         .with_config(
@@ -39,40 +41,26 @@ async def context_gate(
         )
     )
 
-    trace_list = state.get("trace", []) or []
-
-    plan = state.get("plan")
-    plan_cursor = state.get("plan_cursor", 0)
-    formatted_plan = (
-        format_plan_md(plan, title="Current Plan", plan_cursor=plan_cursor)
-        if plan and plan.subgoals
-        else "No plan"
-    )
-
     project_display = (
         runtime.context.project_id if runtime.context.project_id else "unspecified"
     )
     context_header = f"**Session Context:**\n- Course: {runtime.context.course_code}\n- Project: {project_display}\n\n"
+    plan = state.get("plan")
+
     prompt_content = context_header + PROMPTS[
         "context_gate_system_prompt"
-    ].content.format(
-        plan=formatted_plan,
-        trace="\n\n".join(trace_list) if trace_list else "No previous evaluations",
-    )
-    messages = state.get("messages", [])[-6:]
+    ].content.format(plan="\n\n".join(plan) if plan else "No plan")
+
+    messages = state.get("messages", [])
 
     response: ContextGateOutput = await model.ainvoke(
         [SystemMessage(content=prompt_content), *messages]
     )
 
     if response.need_retrieval:
-        return Command(
-            goto="retriever"
-        )
+        return Command(goto="retriever")
     else:
-        return Command(
-            goto="evaluator"
-        )
+        return Command(goto="evaluator")
 
 
 @with_error_escalation("evaluator")
@@ -81,7 +69,9 @@ async def evaluator(
 ) -> Command[Literal["planner", "dialogue_generator"]]:
     configurable = Configuration.from_runnable_config(config)
     model = (
-        init_chat_model(configurable_fields=("model", "reasoning_effort", "verbosity", "api_key"))
+        init_chat_model(
+            configurable_fields=("model", "reasoning_effort", "verbosity", "api_key")
+        )
         .with_structured_output(EvaluatorOutput, method="function_calling")
         .with_retry(stop_after_attempt=configurable.max_structured_output_retries)
         .with_config(
@@ -96,37 +86,38 @@ async def evaluator(
     )
 
     plan = state.get("plan")
-    plan_cursor = state.get("plan_cursor", 0)
-    formatted_plan = (
-        format_plan_md(plan, title="Current Plan", plan_cursor=plan_cursor)
-        if plan and plan.subgoals
-        else "No plan"
-    )
-    trace_list = state.get("trace", []) or []
 
-    gaurdrails = PROMPTS["tutoring_gaurdrails"].content.strip() if "tutoring_gaurdrails" in PROMPTS else ""
+    gaurdrails = (
+        PROMPTS["tutoring_gaurdrails"].content.strip()
+        if "tutoring_gaurdrails" in PROMPTS
+        else ""
+    )
     prompt_content = PROMPTS["evaluator_system_prompt"].content.format(
-        gaurdrails=gaurdrails,
-        trace="\n\n".join(trace_list) if trace_list else "No previous evaluations",
-        current_plan=formatted_plan,
+        gaurdrails=gaurdrails, plan="\n\n".join(plan) if plan else "No plan"
     )
 
-    messages = state.get("messages", [])[-6:]
+    messages = state.get("messages", [])
 
     response: EvaluatorOutput = await model.ainvoke(
         [SystemMessage(content=prompt_content), *messages]
     )
 
-    plan_cursor_update: Optional[int] = None
-
-    if response.completed_subgoals:
-        completed_sorted = sorted(response.completed_subgoals)
-        plan_cursor_update = completed_sorted[-1] + 1
-
     update = {}
+    new_messages = []
+    if response.completed_subgoals and plan:
+        completed_sorted = sorted(response.completed_subgoals, reverse=True)
+        updated_plan = list(plan)
+        for idx in completed_sorted:
+            if 0 <= idx < len(updated_plan):
+                updated_plan.pop(idx)
+                new_messages.append(
+                    SystemMessage(
+                        content=f"[Evaluator] Subgoal {plan[idx]} marked as completed"
+                    )
+                )
+        update["plan"] = updated_plan
 
-    if plan_cursor_update is not None:
-        update["plan_cursor"] = plan_cursor_update
+    update["messages"] = new_messages
 
     if response.need_plan:
         return Command(goto="planner", update=update)
@@ -139,12 +130,14 @@ async def planner(
     state: AitaState, config: RunnableConfig, runtime: Runtime[Context]
 ) -> Dict[str, Any]:
     """
-    Planner - Creates or revises the tutoring plan using the existing trace context.
+    Planner - Creates or revises the tutoring plan using conversation history and current plan.
     """
     # Configure model
     configurable = Configuration.from_runnable_config(config)
     model = (
-        init_chat_model(configurable_fields=("model", "reasoning_effort", "verbosity", "api_key"))
+        init_chat_model(
+            configurable_fields=("model", "reasoning_effort", "verbosity", "api_key")
+        )
         .with_structured_output(PlannerOutput, method="function_calling")
         .with_retry(stop_after_attempt=configurable.max_structured_output_retries)
         .with_config(
@@ -158,47 +151,40 @@ async def planner(
         )
     )
 
-    # Extract state
-    trace_list = state.get("trace", []) or []
-    existing_plan = state.get("plan")
-    plan_cursor = state.get("plan_cursor", 0) or 0
+    plan = state.get("plan")
 
-    # Build unified planning/replanning prompt
-    formatted_plan = (
-        format_plan_md(existing_plan, title="Current Plan", plan_cursor=plan_cursor)
-        if existing_plan and existing_plan.subgoals
-        else "No plan"
+    gaurdrails = (
+        PROMPTS["tutoring_gaurdrails"].content.strip()
+        if "tutoring_gaurdrails" in PROMPTS
+        else ""
     )
-    gaurdrails = PROMPTS["tutoring_gaurdrails"].content.strip() if "tutoring_gaurdrails" in PROMPTS else ""
     prompt_content = PROMPTS["planner_system_prompt"].content.format(
-        gaurdrails=gaurdrails,
-        trace="\n\n".join(trace_list) if trace_list else "No previous trace",
-        current_plan=formatted_plan,
+        gaurdrails=gaurdrails, plan="\n\n".join(plan) if plan else "No plan"
     )
 
-    messages = state.get("messages", [])[-6:]
+    messages = state.get("messages", [])
 
-    # Invoke model
     response: PlannerOutput = await model.ainvoke(
         [SystemMessage(content=prompt_content), *messages]
     )
 
-    # Return plan update
-    if not response.plan or not response.plan.subgoals:
+    if not response.plan:
         return {}
 
-    from aita.state import Plan
+    new_messages = []
 
-    new_subgoals = response.plan.subgoals
+    new_messages.append(SystemMessage(content=f"[Planner] New plan created"))
 
-    # Always return a full Plan (replaces entire plan when replanning)
-    return {"plan": Plan(subgoals=new_subgoals), "plan_cursor": 0}
+    return {
+        "plan": {"type": "override", "value": response.plan},
+        "messages": new_messages,
+    }
 
 
 @with_error_escalation("dialogue_generator")
 async def dialogue_generator(
     state: AitaState, config: RunnableConfig, runtime: Runtime[Context]
-) -> Command[Literal["summarize_trace", "__end__"]]:
+) -> Command[Literal["summarize_messages", "__end__"]]:
     """
     Dialogue Generator - Generates the final response to the student.
     """
@@ -215,40 +201,40 @@ async def dialogue_generator(
         }
     )
 
-    trace_list = state.get("trace", []) or []
     plan = state.get("plan")
-    plan_cursor = state.get("plan_cursor", 0)
-    formatted_plan = (
-        format_plan_md(plan, title="Current Plan", plan_cursor=plan_cursor)
-        if plan and plan.subgoals
-        else "No plan"
-    )
 
     project_display = (
         runtime.context.project_id if runtime.context.project_id else "unspecified"
     )
-    
-    student_env_summary = PROMPTS["student_environment_context"].content.strip() if "student_environment_context" in PROMPTS else ""
-    
+
+    student_env_summary = (
+        PROMPTS["student_environment_context"].content.strip()
+        if "student_environment_context" in PROMPTS
+        else ""
+    )
+
     context_header = f"**Session Context:**\n- Course: {runtime.context.course_code}\n- Project: {project_display}"
     if student_env_summary:
         context_header += f"\n- Environment: {student_env_summary}"
     context_header += "\n\n"
 
-    gaurdrails = PROMPTS["tutoring_gaurdrails"].content.strip() if "tutoring_gaurdrails" in PROMPTS else ""
+    gaurdrails = (
+        PROMPTS["tutoring_gaurdrails"].content.strip()
+        if "tutoring_gaurdrails" in PROMPTS
+        else ""
+    )
     system_prompt = PROMPTS["dialogue_generator"].content
     prompt_content = context_header + system_prompt.format(
         gaurdrails=gaurdrails,
-        trace="\n\n".join(trace_list) if trace_list else "No previous trace",
-        plan=formatted_plan,
+        plan="\n\n".join(plan) if plan else "No plan",
     )
 
-    messages = state.get("messages", [])[-6:]  # Last 3 turns
+    messages = state.get("messages", [])
 
     response = await model.ainvoke([SystemMessage(content=prompt_content), *messages])
 
-    threshold = configurable.trace_summarization_threshold
-    next_node = "summarize_trace" if len(trace_list) >= threshold else "__end__"
+    threshold = configurable.message_summarization_threshold
+    next_node = "summarize_messages" if len(messages) >= threshold else "__end__"
 
     return Command(
         goto=next_node,
@@ -258,15 +244,15 @@ async def dialogue_generator(
     )
 
 
-@with_error_escalation("summarize_trace")
-async def summarize_trace(
+@with_error_escalation("summarize_messages")
+async def summarize_messages(
     state: AitaState, config: RunnableConfig, runtime: Runtime[Context]
 ) -> Dict[str, Any]:
     trace_list = state.get("trace", []) or []
 
     # Configure model (use small model for summarization)
     configurable = Configuration.from_runnable_config(config)
-    threshold = configurable.trace_summarization_threshold
+    threshold = configurable.message_summarization_threshold
 
     if len(trace_list) < threshold:
         return {}
@@ -283,24 +269,18 @@ async def summarize_trace(
         }
     )
 
-    # Summarize all entries into one comprehensive summary
-    trace_entries_text = "\n\n".join(f"- {entry}" for entry in trace_list)
-
-    # Get the current plan for context
     plan = state.get("plan")
-    plan_cursor = state.get("plan_cursor", 0)
-    formatted_plan = (
-        format_plan_md(plan, title="Current Plan", plan_cursor=plan_cursor)
-        if plan and plan.subgoals
-        else "No plan"
+
+    prompt_content = PROMPTS["message_summarizer_system_prompt"].content.format(
+        plan="\n\n".join(plan) if plan else "No plan"
     )
 
-    prompt_content = PROMPTS["trace_summarizer_system_prompt"].content.format(
-        trace_entries=trace_entries_text, current_plan=formatted_plan
-    )
+    messages = state.get("messages", [])
 
-    response = await model.ainvoke([SystemMessage(content=prompt_content)])
+    response = await model.ainvoke([SystemMessage(content=prompt_content), *messages])
 
     summary_text = response.content if hasattr(response, "content") else str(response)
 
-    return {"trace": {"type": "override", "value": [summary_text]}}
+    return {
+        "messages": {"type": "override", "value": [SystemMessage(content=summary_text)]}
+    }

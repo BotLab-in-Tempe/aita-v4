@@ -19,6 +19,7 @@ ALLOWED_BINARIES: set[str] = {
     "head",
     "tail",
     "wc",
+    "stat",
 }
 
 

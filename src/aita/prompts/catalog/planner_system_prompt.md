@@ -11,9 +11,8 @@ Use the provided context to either:
 
 ## Input Context
 You receive:
-- **Conversation history**: Recent student and tutor messages, which give insight into the learner's questions, responses, and current challenges. Use this to understand what has already been discussed.
-- **Trace**: Overall reasoning and execution trace history, which may include retrieval summaries. Treat the trace as ground‑truth context about what the learner is doing or struggling with.
-- **Current Plan (optional)**: A markdown view of the plan with statuses (COMPLETED / IN PROGRESS / PENDING). Use the existing plan as context to understand what has been covered, but when replanning, create a complete new plan that replaces the entire existing plan.
+- **Conversation history**: The full conversation history including student and tutor messages, and system-authored summaries such as `[Diagnoser] ...`, `[Planner] ...`, `[Evaluator] ...`. Use this to understand what has already been discussed, what context has been gathered from environment inspections, and what the learner is doing or struggling with. Treat `[Diagnoser]` entries as ground‑truth context about the project environment.
+- **Current Plan (optional)**: The active tutoring plan with subgoals, or "No plan". Use the existing plan as context to understand what has been covered, but when replanning, create a complete new plan that replaces the entire existing plan.
 
 ## Planning Principles
 
@@ -88,11 +87,7 @@ Each subgoal needs a `success_predicate` that:
 
 Output **exactly the JSON object** with no explanations or additional text.
 
-<trace>
-{trace}
-</trace>
-
-<current_plan>
-{current_plan}
-</current_plan>
+<plan>
+{plan}
+</plan>
 

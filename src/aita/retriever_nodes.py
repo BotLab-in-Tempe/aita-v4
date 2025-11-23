@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Dict, Any, Literal
+from typing import Literal
 
 from langchain.messages import SystemMessage
 from langchain_core.messages import AIMessage
@@ -19,8 +19,6 @@ from langchain.chat_models import init_chat_model
 from aita.utils import build_docker_env_for_user, with_error_escalation
 from aita.tools import make_execute_bash_tool
 from langchain.agents import create_agent
-from langchain_openai import ChatOpenAI
-from aita.utils import format_plan_md
 
 
 @with_error_escalation("probe_planner")
@@ -47,9 +45,6 @@ async def probe_planner(
     )
 
     # Get the AITA trace
-    trace = state.get("trace", [])
-    trace_text = "\n".join(trace) if trace else "No trace yet"
-
     sandbox_environment_context = (
         PROMPTS["sandbox_environment_context"].content
         if "sandbox_environment_context" in PROMPTS
@@ -58,12 +53,6 @@ async def probe_planner(
     )
 
     plan = state.get("plan")
-    plan_cursor = state.get("plan_cursor", 0)
-    formatted_plan = (
-        format_plan_md(plan, title="Current Plan", plan_cursor=plan_cursor)
-        if plan and plan.subgoals
-        else "No plan"
-    )
 
     project_display = (
         runtime.context.project_id if runtime.context.project_id else "unspecified"
@@ -73,16 +62,14 @@ async def probe_planner(
     prompt_content = context_header + PROMPTS[
         "probe_planner_system_prompt"
     ].content.format(
-        aita_trace=trace_text,
         sandbox_environment_context=sandbox_environment_context,
-        current_plan=formatted_plan,
+        plan="\n\n".join(plan) if plan else "No plan",
     )
 
-    messages = state.get("messages", [])[-6:]  # Last 3 turns
-    cli_trace = state.get("cli_trace", []) or []
+    messages = state.get("messages", [])
 
     response: ProbePlannerOutput = await model.ainvoke(
-        [SystemMessage(content=prompt_content), *messages, *cli_trace]
+        [SystemMessage(content=prompt_content), *messages]
     )
 
     return Command(
@@ -164,34 +151,31 @@ async def diagnoser(
             "tags": ["langsmith:nostream"],
         }
     )
+
     cli_trace = state.get("cli_trace", []) or []
-    trace = state.get("trace", [])
-    trace_text = "\n".join(trace) if trace else "No trace yet"
+
     plan = state.get("plan")
-    plan_cursor = state.get("plan_cursor", 0)
-    formatted_plan = (
-        format_plan_md(plan, title="Current Plan", plan_cursor=plan_cursor)
-        if plan and plan.subgoals
-        else "No plan"
-    )
+
     project_display = (
         runtime.context.project_id if runtime.context.project_id else "unspecified"
     )
     context_header = f"**Session Context:**\n- Course: {runtime.context.course_code}\n- Project: {project_display}\n\n"
+
     prompt_content = context_header + PROMPTS["diagnoser_system_prompt"].content.format(
-        aita_trace=trace_text,
-        current_plan=formatted_plan,
+        plan="\n\n".join(plan) if plan else "No plan",
     )
-    messages = state.get("messages", [])[-6:]
+    messages = state.get("messages", [])
+
     response = await model.ainvoke(
         [SystemMessage(content=prompt_content), *messages, *cli_trace]
     )
+
     diagnosis_text = response.content if isinstance(response, AIMessage) else ""
-    trace_entry = f"[Diagnoser]\n\n{diagnosis_text}"
+
     return Command(
         goto="__end__",
         update={
-            "trace": [trace_entry],
+            "messages": [SystemMessage(content=f"[Diagnoser] {diagnosis_text}")],
             "cli_trace": {"type": "override", "value": []},
         },
     )

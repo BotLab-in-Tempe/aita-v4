@@ -4,7 +4,6 @@ import os
 from typing import List
 from functools import wraps
 
-from aita.state import Plan
 from aita.docker_env import DockerEnvironment, DockerEnvironmentConfig
 from langgraph.types import interrupt
 from aita.logger import get_logger
@@ -99,29 +98,3 @@ async def build_docker_env_for_user(user_id: str) -> DockerEnvironment:
         cwd=EXEC_CWD or "/workspace/projects",
         run_args=run_args,
     )
-
-
-def format_plan_md(plan, *, title: str = "Plan", plan_cursor: int = 0) -> str:
-    out: List[str] = []
-    out.append(title)
-    out.append("")
-
-    if not plan or not isinstance(plan, Plan) or not plan.subgoals:
-        out.append("(no plan)")
-        return "\n".join(out).rstrip() + "\n"
-
-    for idx, subgoal in enumerate(plan.subgoals, 1):
-        if idx - 1 < plan_cursor:
-            status = "COMPLETED"
-        elif idx - 1 == plan_cursor:
-            status = "IN PROGRESS"
-        else:
-            status = "PENDING"
-
-        out.append(f"{idx}. {status} **{subgoal.subgoal}**")
-        out.append(f"   - Success: {subgoal.success_predicate}")
-        out.append("")
-
-    guardrail = "We ONLY want to focus on the CURRENT subgoal in the plan, that is marked as IN PROGRESS. So scope everthing into that only!"
-
-    return "\n".join(out).rstrip() + "\n\n" + guardrail + "\n"
