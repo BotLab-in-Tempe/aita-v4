@@ -85,7 +85,7 @@ async def evaluator(
         )
     )
 
-    plan = state.get("plan").get("value")
+    plan = state.get("plan")
 
     gaurdrails = (
         PROMPTS["tutoring_gaurdrails"].content.strip()
@@ -123,8 +123,6 @@ async def evaluator(
     }
 
     # Handle completed subgoals by trimming the plan queue
-
-    print(plan)
     if response.completed_subgoals and plan:
         completed_sorted = sorted(response.completed_subgoals, reverse=True)
         updated_plan = list(plan)
@@ -137,7 +135,7 @@ async def evaluator(
                         content=f"[Evaluator] Subgoal {subgoal_text} marked as completed"
                     )
                 )
-        update["plan"] = {"type": "override", "value": updated_plan}
+        update["plan"] = updated_plan
 
     # Log evaluator's internal decision message, if provided
     if response.message:
@@ -210,7 +208,7 @@ async def planner(
     new_messages.append(SystemMessage(content=f"[Planner] New plan created"))
 
     return {
-        "plan": {"type": "override", "value": response.plan},
+        "plan": response.plan,
         "messages": new_messages,
     }
 

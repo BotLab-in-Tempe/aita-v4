@@ -77,7 +77,7 @@ class ProbePlannerOutput(BaseModel):
 
 class AitaState(MessagesState):
     cli_trace: Annotated[list[AnyMessage], override_reducer] = []
-    plan: Annotated[Optional[List[str]], override_reducer] = None
+    plan: Optional[List[str]] = None
     probe_task: Optional[str] = None
     escalate: Annotated[Optional[bool], override_reducer] = None
     should_respond: Annotated[Optional[bool], override_reducer] = None
