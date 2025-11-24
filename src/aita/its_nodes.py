@@ -123,15 +123,16 @@ async def evaluator(
     }
 
     # Handle completed subgoals by trimming the plan queue
-    if response.completed_subgoals and plan:
+    if response.completed_subgoals and plan and isinstance(plan, list):
         completed_sorted = sorted(response.completed_subgoals, reverse=True)
         updated_plan = list(plan)
         for idx in completed_sorted:
             if 0 <= idx < len(updated_plan):
+                subgoal_text = updated_plan[idx]
                 updated_plan.pop(idx)
                 new_messages.append(
                     SystemMessage(
-                        content=f"[Evaluator] Subgoal {plan[idx]} marked as completed"
+                        content=f"[Evaluator] Subgoal {subgoal_text} marked as completed"
                     )
                 )
         update["plan"] = {"type": "override", "value": updated_plan}
