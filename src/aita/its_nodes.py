@@ -123,7 +123,7 @@ async def evaluator(
     }
 
     # Handle completed subgoals by trimming the plan queue
-    if response.completed_subgoals and plan and isinstance(plan, list):
+    if response.completed_subgoals and plan:
         completed_sorted = sorted(response.completed_subgoals, reverse=True)
         updated_plan = list(plan)
         for idx in completed_sorted:
