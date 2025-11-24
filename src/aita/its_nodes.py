@@ -134,7 +134,7 @@ async def evaluator(
                         content=f"[Evaluator] Subgoal {plan[idx]} marked as completed"
                     )
                 )
-        update["plan"] = updated_plan
+        update["plan"] = {"type": "override", "value": updated_plan}
 
     # Log evaluator's internal decision message, if provided
     if response.message:
