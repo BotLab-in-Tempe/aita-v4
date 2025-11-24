@@ -85,7 +85,7 @@ async def evaluator(
         )
     )
 
-    plan = state.get("plan")
+    plan = state.get("plan").get("value")
 
     gaurdrails = (
         PROMPTS["tutoring_gaurdrails"].content.strip()
@@ -123,6 +123,8 @@ async def evaluator(
     }
 
     # Handle completed subgoals by trimming the plan queue
+
+    print(plan)
     if response.completed_subgoals and plan:
         completed_sorted = sorted(response.completed_subgoals, reverse=True)
         updated_plan = list(plan)
