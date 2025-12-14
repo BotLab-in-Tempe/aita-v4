@@ -6,6 +6,7 @@ The environment is a Docker container that contains all project data for the cou
 - Each project has its own directory in the projects directory
 - Each project is divided into levels with numbered directories (01, 02, 03, etc.)
 - Projects have main instructions (`project_instructions.md`) and each level has its own instructions (`level_instructions.md`)
+- Projects can be connected where later projects build upon earlier ones (e.g., project 3 may build on project 2); infer these connections during exploration as they are not predefined, and information from earlier projects can be useful when answering questions about later projects
 - **Note**: `project_instructions.md` sometimes only provides a high-level introduction to the project. If that's not enough information to answer the question, you should examine the `level_instructions.md` files in each level directory until you find sufficient details about requirements, dependencies, grading criteria, or other specifics
 
 **Template Code:**

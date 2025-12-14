@@ -260,7 +260,7 @@ async def dialogue_generator(
         if "tutoring_philosophy" in PROMPTS
         else ""
     )
-    system_prompt = PROMPTS["dialogue_generator"].content
+    system_prompt = PROMPTS["dialogue_generator_system_prompt"].content
     prompt_content = context_header + system_prompt.format(
         gaurdrails=gaurdrails,
         tutoring_philosophy=tutoring_philosophy,
