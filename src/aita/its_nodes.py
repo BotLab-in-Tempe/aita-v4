@@ -4,7 +4,7 @@ from typing import Any, Dict, Literal
 
 from langgraph.types import Command
 from langgraph.runtime import Runtime
-from langchain_core.messages import SystemMessage
+from langchain_core.messages import RemoveMessage, SystemMessage
 from langchain_core.runnables import RunnableConfig
 from langchain.chat_models import init_chat_model
 
@@ -330,6 +330,10 @@ async def summarize_messages(
 
     summary_text = response.content if hasattr(response, "content") else str(response)
 
+    # Remove old messages and replace with summary
+    # RemoveMessage requires message IDs - delete all except keep summary
+    delete_messages = [RemoveMessage(id=m.id) for m in messages if hasattr(m, "id")]
+
     return {
-        "messages": {"type": "override", "value": [SystemMessage(content=summary_text)]}
+        "messages": [*delete_messages, SystemMessage(content=summary_text)],
     }
