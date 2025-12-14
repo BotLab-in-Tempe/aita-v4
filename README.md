@@ -53,6 +53,9 @@ The system consists of specialized nodes that work together:
 
 ## Setup
 
+<details>
+<summary>Click to expand setup instructions</summary>
+
 Copy `.env.example` to `.env` and set:
 
 ```
@@ -103,7 +106,12 @@ To deploy Aita for a new course, update the following:
 - **Docker Image**: Customize the sandbox image (`src/aita/sandbox_img/Dockerfile`) if the course requires specific tools or dependencies
 - **Project Paths**: Configure `EXEC_PROJECTS_ROOT` and `EXEC_SNAPSHOT_ROOT` to point to course-specific directories
 
+</details>
+
 ## Usage
+
+<details>
+<summary>Click to expand usage instructions</summary>
 
 ### Development
 
@@ -136,6 +144,8 @@ POST `/chat`
   ]
 }
 ```
+
+</details>
 
 ## Interface
 
