@@ -1,4 +1,6 @@
-# <img src="static/banner.png" alt="Aita banner" width="300" style="border-radius: 12px;">
+<img src="static/banner.png" alt="Aita banner" width="300" style="border-radius: 12px;">
+
+---
 
 An environment-aware, agentic teaching assistant built with LangGraph that inspects code and context to deliver grounded, course-aligned guidance for programming courses.
 
