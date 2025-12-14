@@ -38,5 +38,3 @@ Create a neutral, factual summary that allows the system to continue tutoring ef
 
 **Conversation History Entries to Summarize (already include `[Diagnoser]`, `[Planner]`, `[Evaluator]`, etc.):**
 
-{message_entries}
-
