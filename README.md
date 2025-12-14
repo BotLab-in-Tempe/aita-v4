@@ -3,27 +3,32 @@
 ---
 [![Discord](https://img.shields.io/badge/Discord-Join%20chat-5865F2?logo=discord&logoColor=white)](https://discord.gg/x4dMAgARKk)
 
-An environment-aware, agentic teaching assistant built with LangGraph that inspects code and context to deliver grounded, course-aligned guidance for programming courses.
+An environment-aware, agentic teaching assistant built with LangGraph that can inspect your project (safely) to deliver grounded, course-aligned guidance—without handing you full solutions.
 
 <img src="static/discord-example.png" alt="Discord example" width="600" style="border-radius: 12px;">
 
 ## How It Works
 
-Aita is a cybernetic duck-samurai teaching assistant built for course level assistance, designed to give immediate, context-aware help while preserving the critical thinking and problem-solving expected from students. It uses Socratic, question-driven tutoring and an internal plan of subgoals to break problems down and guide learners step-by-step toward their own solutions.
+Aita is a cybernetic duck-samurai teaching assistant for programming courses. You ask a question, and it provides immediate, context-aware tutoring while preserving the critical thinking and problem-solving expected from students.
 
-Version 4 uses the GPT-5.1 family of models, including reasoning models for structured decision-making and chat models for dialogue generation. The system leverages LangGraph for agent orchestration and PostgreSQL for persistent state management.
+**High-level flow**
+1. **You ask a question** (e.g., an error, failing test, confusing concept).
+2. **Aita decides what context it needs** (which files, logs, or checks matter).
+3. **It inspects the project in a sandbox** (student-specific Docker container; targeted file reads and limited CLI actions).
+4. **It evaluates and may respond** (forms a short 3–5 subgoal plan, then either tutors Socratically with hints and next steps, or suppresses the response if not needed, or escalates to a human TA).
 
-Each chat session is governed by a student-specific Docker container that serves as the main source of retrieval in the system. This approach represents agentic RAG, where the agent decides what and how much information is needed to provide assistance. Unlike traditional RAG that queries static embeddings, Aita's retriever agents perform targeted, on-demand exploration of the live student environment through sandboxed CLI execution, enabling grounded, context-aware responses based on the actual state of the student's code.
+Under the hood, Version 4 uses the GPT-5.1 family of models (reasoning models for decision-making + chat models for response generation), with LangGraph for orchestration and PostgreSQL for persistent state.
 
 ### Tutoring Approach
 
-Aita uses Socratic questioning and scaffolded guidance to help students discover solutions themselves. It never provides direct code examples or complete solutions for course projects, instead guiding through concepts, hints, and thought processes. The system maintains a short-term plan of 3-5 actionable subgoals that track the agent's internal roadmap for resolving the issue. As the conversation evolves or student needs shift, Aita dynamically replans, replacing the entire plan when necessary to stay aligned with the current objective. The system adapts its approach based on student progress, escalating help gradually when needed while preserving student autonomy. The goal isn't just to solve the immediate problem, but to build understanding that transfers to future challenges.
+Aita uses Socratic questioning and scaffolded guidance to help students discover solutions themselves. It avoids providing complete solutions for course projects; instead it guides through concepts, debugging strategy, and incremental next actions. As the conversation evolves, Aita updates its 3–5 subgoal plan to stay aligned with the current objective, escalating help gradually while preserving student autonomy.
 
-### Context Management
+### Architecture Notes
 
-Aita uses LangGraph's `MessagesState` to maintain a single unified message trace that contains the entire conversation history. This trace includes student messages, tutor responses, and internal system messages from agents like `[Diagnoser]`, `[Planner]`, and `[Evaluator]`. All nodes access this same trace, ensuring each agent sees the full context of what has been discovered, planned, and decided throughout the conversation. This unified approach is essential for coordinated decision-making, as the Context Gate can check if retrieval already occurred, the Evaluator can see diagnostic findings, and the Dialogue Generator can reference prior reasoning without losing context.
+**Agentic retrieval (agentic RAG):** each chat session runs against a student-specific Docker environment that acts as the primary "source of truth" for both project context and code inspection. The environment “source of truth.” Instead of relying only on static embeddings, retriever agents can perform targeted, on-demand exploration of the live project via sandboxed CLI execution (e.g., checking file structure, reading relevant code, running a limited check) so responses stay grounded in the actual state of the code.
 
-As conversations grow, the message trace accumulates all interactions. When it exceeds a configurable threshold (default 15 messages), the Message Summarizer condenses the entire trace into a comprehensive summary that preserves critical information like project details, code structure, bugs found, and student progress. The original messages are removed and replaced with this summary, keeping the context window manageable while maintaining the essential context needed for effective tutoring. It's compression with understanding, not just truncation.
+**State + summarization (context management):** Aita uses LangGraph’s `MessagesState` as a unified message trace that includes user messages, tutor responses, and internal agent messages (e.g., `[Diagnoser]`, `[Planner]`, `[Evaluator]`). When the trace exceeds a configurable threshold (default 15 messages), a summarizer replaces older messages with a durable summary that preserves essentials (project context, code structure, key findings, progress) to keep the context window manageable.
+
 
 ## Agent System
 
