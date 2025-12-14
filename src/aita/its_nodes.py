@@ -299,12 +299,13 @@ async def summarize_messages(
     """
     Message Summarizer - Summarizes conversation messages when the threshold is reached.
     """
-    trace_list = state.get("trace", []) or []
+
+    messages = state.get("messages", [])
 
     configurable = Configuration.from_runnable_config(config)
     threshold = configurable.message_summarization_threshold
 
-    if len(trace_list) < threshold:
+    if len(messages) < threshold:
         return {}
 
     model = init_chat_model(
@@ -324,8 +325,6 @@ async def summarize_messages(
     prompt_content = PROMPTS["message_summarizer_system_prompt"].content.format(
         plan="\n\n".join(plan) if plan else "No plan"
     )
-
-    messages = state.get("messages", [])
 
     response = await model.ainvoke([SystemMessage(content=prompt_content), *messages])
 

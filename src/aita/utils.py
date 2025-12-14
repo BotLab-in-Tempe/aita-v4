@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import traceback
 from functools import wraps
 
 from aita.docker_env import DockerEnvironment, DockerEnvironmentConfig
@@ -13,8 +14,7 @@ logger = get_logger()
 def with_error_escalation(node_name: str):
     """
     Decorator that wraps nodes with centralized error escalation logic.
-    When an exception occurs, it creates an interrupt with error details
-    and available actions (retry, skip, abort).
+    Logs full error context then triggers an interrupt for human review.
     """
 
     def decorator(fn):
@@ -23,19 +23,22 @@ def with_error_escalation(node_name: str):
             try:
                 return await fn(state, *args, **kwargs)
             except Exception as e:
-                logger.warning(
-                    f"Error escalation triggered - node={node_name}, "
-                    f"error_type={type(e).__name__}, error={str(e)[:100]}"
+                tb = traceback.format_exc()
+                state_keys = list(state.keys()) if hasattr(state, "keys") else []
+                logger.error(
+                    f"Node '{node_name}' failed: {type(e).__name__}: {e}\n"
+                    f"State keys: {state_keys}\n{tb}"
                 )
-                # CENTRALIZED escalation logic
+                # interrupt() may or may not raise depending on version
+                # return its result to ensure LangGraph sees the interrupt marker
                 return interrupt(
                     {
                         "type": "node_error",
                         "node": node_name,
+                        "error_type": type(e).__name__,
                         "error": str(e),
-                        "state_snapshot": {
-                            "keys": list(state.keys()),
-                        },
+                        "traceback": tb,
+                        "state_keys": state_keys,
                         "actions": ["retry", "skip", "abort"],
                     }
                 )
