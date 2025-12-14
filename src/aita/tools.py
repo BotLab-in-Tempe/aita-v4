@@ -1,4 +1,3 @@
-# tools.py
 from __future__ import annotations
 
 from typing import Any
@@ -10,13 +9,13 @@ from aita.utils import DockerEnvironment
 
 def make_execute_bash_tool(env: DockerEnvironment):
     """
-    Create a LangChain tool that runs bash commands inside the given DockerEnvironment.
+    Creates a LangChain tool that runs bash commands inside the given DockerEnvironment.
     """
 
     @tool("execute_bash")
     def execute_bash(command: str, timeout: int = 30) -> dict[str, Any]:
         """
-        Execute a *simple* bash command (ls, cat, grep, find, etc.) inside the
+        Can execute bash commands (ls, cat, grep, find, etc.) inside the
         sandbox container and return stdout, returncode, and safety info.
 
         This tool is intended only for read-only exploration of the filesystem.
@@ -38,5 +37,4 @@ def make_execute_bash_tool(env: DockerEnvironment):
             "stderr": "" if result["returncode"] == 0 else "Non-zero exit code.",
         }
 
-    # The decorator returns a Tool instance
     return execute_bash

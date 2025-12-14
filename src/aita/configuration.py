@@ -10,28 +10,10 @@ load_dotenv(override=True)
 
 class Configuration(BaseModel):
 
-    # Model categories
-    main_model: str = Field(
-        default="openai:gpt-4o", description="Main LLM used by most nodes."
-    )
-    small_model: str = Field(
-        default="openai:gpt-4o-mini", description="Lightweight LLM for simple tasks."
-    )
-    reasoning_model: str = Field(
-        default="openai:gpt-5",
-        description="Reasoning LLM for complex tasks (not currently used).",
-    )
-
-    # Token categories
-    small_tokens: int = 1024
-    medium_tokens: int = 2048
-    large_tokens: int = 4096
-
     api_key: str = os.getenv("OPENAI_API_KEY")
 
     max_structured_output_retries: int = 3
 
-    # Trace summarization
     message_summarization_threshold: int = Field(
         default=15,
         description="Number of messages before summarization is triggered",

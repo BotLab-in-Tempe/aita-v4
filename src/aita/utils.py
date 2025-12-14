@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import os
-from typing import List
 from functools import wraps
 
 from aita.docker_env import DockerEnvironment, DockerEnvironmentConfig
@@ -46,7 +45,6 @@ def with_error_escalation(node_name: str):
     return decorator
 
 
-# Configure project and snapshot paths from environment variables
 EXEC_IMAGE = os.getenv("EXEC_IMAGE", "aita-sandbox:latest")
 EXEC_PROJECTS_ROOT = os.getenv("EXEC_PROJECTS_ROOT")
 EXEC_SNAPSHOT_ROOT = os.getenv("EXEC_SNAPSHOT_ROOT")
@@ -70,7 +68,6 @@ async def build_docker_env_for_user(user_id: str) -> DockerEnvironment:
         f"{EXEC_PROJECTS_ROOT}:/workspace/projects",
     ]
 
-    # Walk the shared project tree and mount this user's snapshot into each level
     for project in os.listdir(EXEC_PROJECTS_ROOT):
         project_path = os.path.join(EXEC_PROJECTS_ROOT, project)
         if not os.path.isdir(project_path):

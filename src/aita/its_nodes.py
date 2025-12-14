@@ -23,6 +23,9 @@ from aita.utils import with_error_escalation
 async def context_gate(
     state: AitaState, config: RunnableConfig, runtime: Runtime[Context]
 ) -> Command[Literal["retriever", "evaluator"]]:
+    """
+    Context Gate - Decides whether to retrieve additional context or proceed to evaluation.
+    """
     configurable = Configuration.from_runnable_config(config)
     model = (
         init_chat_model(
@@ -67,6 +70,9 @@ async def context_gate(
 async def evaluator(
     state: AitaState, config: RunnableConfig, runtime: Runtime[Context]
 ) -> Command[Literal["planner", "dialogue_generator"]]:
+    """
+    Evaluator - Evaluates the conversation state and determines next steps.
+    """
     configurable = Configuration.from_runnable_config(config)
     model = (
         init_chat_model(
@@ -157,7 +163,6 @@ async def planner(
     """
     Planner - Creates or revises the tutoring plan using conversation history and current plan.
     """
-    # Configure model
     configurable = Configuration.from_runnable_config(config)
     model = (
         init_chat_model(
@@ -291,9 +296,11 @@ async def dialogue_generator(
 async def summarize_messages(
     state: AitaState, config: RunnableConfig, runtime: Runtime[Context]
 ) -> Dict[str, Any]:
+    """
+    Message Summarizer - Summarizes conversation messages when the threshold is reached.
+    """
     trace_list = state.get("trace", []) or []
 
-    # Configure model (use small model for summarization)
     configurable = Configuration.from_runnable_config(config)
     threshold = configurable.message_summarization_threshold
 

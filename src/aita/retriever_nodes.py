@@ -25,6 +25,9 @@ from langchain.agents import create_agent
 async def probe_planner(
     state: AitaState, config: RunnableConfig, runtime: Runtime[Context]
 ) -> Command[Literal["cli_agent"]]:
+    """
+    Probe Planner - Plans probe tasks to gather diagnostic information from the student's environment.
+    """
 
     configurable = Configuration.from_runnable_config(config)
     model = (
@@ -44,7 +47,6 @@ async def probe_planner(
         )
     )
 
-    # Get the AITA trace
     sandbox_environment_context = (
         PROMPTS["sandbox_environment_context"].content
         if "sandbox_environment_context" in PROMPTS
@@ -84,6 +86,9 @@ async def probe_planner(
 async def cli_agent(
     state: AitaState, config: RunnableConfig, runtime: Runtime[Context]
 ) -> Command[Literal["__end__"]]:
+    """
+    CLI Agent - Executes bash commands in the student's Docker environment to gather diagnostic information.
+    """
 
     configurable = Configuration.from_runnable_config(config)
 
@@ -102,7 +107,6 @@ async def cli_agent(
     docker_env = await build_docker_env_for_user(runtime.context.user_id)
     execute_bash_tool = make_execute_bash_tool(docker_env)
 
-    # Get probe_task from probe_planner
     probe_task = state.get("probe_task") or "No probe task"
     sandbox_environment_context = (
         PROMPTS["sandbox_environment_context"].content
@@ -140,6 +144,9 @@ async def cli_agent(
 async def diagnoser(
     state: AitaState, config: RunnableConfig, runtime: Runtime[Context]
 ) -> Command[Literal["__end__"]]:
+    """
+    Diagnoser - Analyzes CLI trace output and generates diagnostic insights about the student's issue.
+    """
     model = init_chat_model(
         configurable_fields=("model", "reasoning_effort", "verbosity", "api_key")
     ).with_config(
