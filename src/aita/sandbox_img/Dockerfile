@@ -1,4 +1,6 @@
 # Dockerfile
+# docker build -t aita-sandbox:latest .
+
 FROM ubuntu:22.04
 
 RUN apt-get update && \
