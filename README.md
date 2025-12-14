@@ -2,6 +2,12 @@
 
 ---
 [![Discord](https://img.shields.io/badge/Discord-Join%20chat-5865F2?logo=discord&logoColor=white)](https://discord.gg/x4dMAgARKk)
+![Python](https://img.shields.io/badge/Python-3.11%2B-blue?logo=python&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-sandbox-2496ED?logo=docker&logoColor=white)
+![LangGraph](https://img.shields.io/badge/LangGraph-orchestration-black)
+![Postgres](https://img.shields.io/badge/PostgreSQL-state-4169E1?logo=postgresql&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-API-009688?logo=fastapi&logoColor=white)
+
 
 An environment-aware, agentic teaching assistant built with LangGraph that can inspect your project (safely) to deliver grounded, course-aligned guidance—without handing you full solutions.
 
