@@ -1,6 +1,7 @@
 <img src="static/banner.PNG" alt="Aita banner" width="300" style="border-radius: 12px;">
 
 ---
+[![Discord](https://img.shields.io/badge/Discord-Join%20chat-5865F2?logo=discord&logoColor=white)](https://discord.gg/x4dMAgARKk)
 
 An environment-aware, agentic teaching assistant built with LangGraph that inspects code and context to deliver grounded, course-aligned guidance for programming courses.
 
