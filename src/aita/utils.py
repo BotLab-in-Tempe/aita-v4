@@ -50,24 +50,19 @@ EXEC_PROJECTS_ROOT = os.getenv("EXEC_PROJECTS_ROOT")
 EXEC_SNAPSHOT_ROOT = os.getenv("EXEC_SNAPSHOT_ROOT")
 EXEC_CWD = os.getenv("EXEC_CWD")
 
-if not EXEC_PROJECTS_ROOT or not EXEC_SNAPSHOT_ROOT:
-    raise RuntimeError("EXEC_PROJECTS_ROOT and EXEC_SNAPSHOT_ROOT must be set.")
+if not EXEC_PROJECTS_ROOT:
+    raise RuntimeError("EXEC_PROJECTS_ROOT must be set.")
 
 
-async def build_docker_env_for_user(user_id: str) -> DockerEnvironment:
+def get_snapshot_mounts(user_id: str) -> list[str]:
     """
-    One container per user with all projects/levels available.
-    Inside the container:
-      - /workspace/projects        -> shared project tree (read-only)
-      - /workspace/projects/<proj>/<level>/student_code_snapshot
-            -> this user's snapshot for that level (if it exists)
+    Returns volume mount args for user snapshots.
+    Override this to customize how user code is mounted.
     """
-    run_args: list[str] = [
-        "--rm",
-        "-v",
-        f"{EXEC_PROJECTS_ROOT}:/workspace/projects",
-    ]
+    if not EXEC_SNAPSHOT_ROOT:
+        return []
 
+    mounts = []
     for project in os.listdir(EXEC_PROJECTS_ROOT):
         project_path = os.path.join(EXEC_PROJECTS_ROOT, project)
         if not os.path.isdir(project_path):
@@ -80,13 +75,22 @@ async def build_docker_env_for_user(user_id: str) -> DockerEnvironment:
 
             snapshot_host = os.path.join(EXEC_SNAPSHOT_ROOT, project, level, user_id)
             if not os.path.isdir(snapshot_host):
-                # user might not have submitted for this level yet
                 continue
 
             container_target = (
                 f"/workspace/projects/{project}/{level}/student_code_snapshot"
             )
-            run_args.extend(["-v", f"{snapshot_host}:{container_target}"])
+            mounts.extend(["-v", f"{snapshot_host}:{container_target}"])
+
+    return mounts
+
+
+async def build_docker_env_for_user(user_id: str) -> DockerEnvironment:
+    """
+    One container per user with all projects/levels available.
+    """
+    run_args = ["--rm", "-v", f"{EXEC_PROJECTS_ROOT}:/workspace/projects"]
+    run_args.extend(get_snapshot_mounts(user_id))
 
     return DockerEnvironment(
         user_id=user_id,
