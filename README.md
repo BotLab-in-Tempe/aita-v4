@@ -1,11 +1,11 @@
-<img src="static/banner.PNG" alt="Aita banner" width="300" style="border-radius: 12px;">
+<img src="static/banner.PNG" alt="Aita banner" width="300" style="border-radius: 20px;">
 
 ---
 [![Discord](https://img.shields.io/badge/Discord-Join%20chat-5865F2?logo=discord&logoColor=white)](https://discord.gg/x4dMAgARKk)
 
 An environment-aware, agentic teaching assistant built with LangGraph that inspects code and context to deliver grounded, course-aligned guidance for programming courses.
 
-
+<img src="static/discord-example.png" alt="Discord example" width="600" style="border-radius: 12px;">
 
 ## How It Works
 
@@ -131,6 +131,12 @@ POST `/chat`
   ]
 }
 ```
+
+## Interface
+
+Aita is currently deployed for **CSE 240: Introduction to Programming Languages** at Arizona State University. The course covers programming projects in C, C++, Scheme, and Prolog on the [pwn.college dojo platform](https://pwn.college/intro-to-programming-languages/). Course details are available at [cse240.com/syllabus](https://cse240.com/syllabus).
+
+The primary interface is a Discord bot integrated into the class Discord server. Students create threads for their questions, and each thread is treated as a separate session. Aita is capable of handling group discussions and maintains temporal flow when messages are embedded with usernames and timestamps in the API invocation, allowing the system to track multiple participants and conversation chronology within a single thread.
 
 ## References
 
