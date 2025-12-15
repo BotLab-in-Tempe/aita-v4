@@ -44,11 +44,23 @@ Aita is a cybernetic duck-samurai teaching assistant for programming courses. Yo
 
 Under the hood, Version 4 uses the GPT-5.1 family of models (reasoning models for decision-making + chat models for response generation), with [LangGraph](https://langchain-ai.github.io/langgraph/) [1] for orchestration and PostgreSQL for persistent state.
 
+<p align="left">
+  <a href="https://langchain-ai.github.io/langgraph/">
+    <img src="static/langgraph-logo.png" alt="LangGraph logo" width="150" style="margin: 10px;">
+  </a>
+</p>
+
 **Observability:** [Langfuse](https://langfuse.com) is integrated for tracing only, providing visibility into agent execution flows and LLM calls for debugging and monitoring.
+
+<p align="left">
+  <a href="https://langfuse.com">
+    <img src="static/langfuse-logo.png" alt="Langfuse logo" width="150" style="margin: 10px;">
+  </a>
+</p>
 
 ### Tutoring Approach
 
-Aita uses Socratic questioning and scaffolded guidance to help students discover solutions themselves [6]. It avoids providing complete solutions for course projects; instead it guides through concepts, debugging strategy, and incremental next actions. As the conversation evolves, Aita updates its 3–5 subgoal plan [3, 4] to stay aligned with the current objective, escalating help gradually while preserving student autonomy.
+Aita uses Socratic questioning and scaffolded guidance to help students discover solutions themselves [6]. It avoids providing complete solutions for course projects; instead it guides through concepts, debugging strategy, and incremental next actions. As the conversation evolves, Aita updates its 3–5 subgoal plan [3, 4] to stay aligned with the current objective, escalating help gradually while preserving student autonomy. (See [`src/aita/prompts/catalog/guidelines/`](src/aita/prompts/catalog/guidelines/) for the full philosophy and guardrails.)
 
 ### Architecture Notes
 
@@ -128,8 +140,8 @@ Student code snapshots are mounted from `EXEC_SNAPSHOT_ROOT` to provide live acc
 
 To deploy Aita for a new course, update the following:
 
-- **Prompts**: Modify system prompts in `src/aita/prompts/catalog/` to align with course-specific tutoring philosophy and guardrails
-- **Environment Context**: Update `student_environment_context.md` and `sandbox_environment_context.md` with course-specific project structures and conventions
+- **Prompts**: Modify system prompts in [`src/aita/prompts/catalog/sys_prompts/`](src/aita/prompts/catalog/sys_prompts/) and guidelines in [`src/aita/prompts/catalog/guidelines/`](src/aita/prompts/catalog/guidelines/) to align with course-specific tutoring philosophy and guardrails
+- **Environment Context**: Update [`student_environment_context.md`](src/aita/prompts/catalog/contexts/student_environment_context.md) and [`sandbox_environment_context.md`](src/aita/prompts/catalog/contexts/sandbox_environment_context.md) with course-specific project structures and conventions
 - **Docker Image**: Customize the sandbox image (`src/aita/sandbox_img/Dockerfile`) if the course requires specific tools or dependencies
 - **Project Paths**: Configure `EXEC_PROJECTS_ROOT` and `EXEC_SNAPSHOT_ROOT` to point to course-specific directories
 - **Docker Compose**: Edit `docker-compose.yml` to update course-specific volume mounts. The current configuration includes CSE 240-specific paths:
