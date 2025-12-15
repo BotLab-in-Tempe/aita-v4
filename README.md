@@ -25,6 +25,13 @@
   <img src="static/discord-example.png" alt="Discord example" width="700" style="border-radius: 12px;">
 </p>
 
+<p align="center">
+  <img src="static/aita-cyberpunk.png" alt="Aita cyberpunk" width="300" style="border-radius: 12px; margin: 5px;">
+  <img src="static/aita-matrix.png" alt="Aita matrix" width="300" style="border-radius: 12px; margin: 5px;">
+  <img src="static/aita-meditation.png" alt="Aita meditation" height="200" style="border-radius: 12px; margin: 5px;">
+  <img src="static/aita-casual.png" alt="Aita casual" height="200" style="border-radius: 12px; margin: 5px;">
+</p>
+
 ## How It Works
 
 Aita is a cybernetic duck-samurai teaching assistant for programming courses. You ask a question, and it provides immediate, context-aware tutoring while preserving the critical thinking and problem-solving expected from students.
