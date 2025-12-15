@@ -1,17 +1,29 @@
-<img src="static/banner.PNG" alt="Aita banner" width="300" style="border-radius: 20px;">
+<p align="center">
+  <img src="static/banner.PNG" alt="Aita banner" width="420" style="border-radius: 20px;">
+</p>
 
----
-[![Discord](https://img.shields.io/badge/Discord-Join%20chat-5865F2?logo=discord&logoColor=white)](https://discord.gg/x4dMAgARKk)
-![Python](https://img.shields.io/badge/Python-3.11%2B-blue?logo=python&logoColor=white)
-![Docker](https://img.shields.io/badge/Docker-sandbox-2496ED?logo=docker&logoColor=white)
-![LangGraph](https://img.shields.io/badge/LangGraph-orchestration-black)
-![Postgres](https://img.shields.io/badge/PostgreSQL-state-4169E1?logo=postgresql&logoColor=white)
-![FastAPI](https://img.shields.io/badge/FastAPI-API-009688?logo=fastapi&logoColor=white)
+<p align="center">
+  <a href="https://discord.gg/x4dMAgARKk">
+    <img src="https://img.shields.io/badge/Discord-Join%20chat-5865F2?logo=discord&logoColor=white">
+  </a>
+</p>
 
+<p align="center">
+  <img src="https://img.shields.io/badge/Python-3.11%2B-blue?logo=python&logoColor=white">
+  <img src="https://img.shields.io/badge/Docker-sandbox-2496ED?logo=docker&logoColor=white">
+  <img src="https://img.shields.io/badge/LangGraph-orchestration-black">
+  <img src="https://img.shields.io/badge/Langfuse-tracing-00A86B?logo=langfuse&logoColor=white">
+  <img src="https://img.shields.io/badge/PostgreSQL-state-4169E1?logo=postgresql&logoColor=white">
+  <img src="https://img.shields.io/badge/FastAPI-API-009688?logo=fastapi&logoColor=white">
+</p>
 
-An environment-aware, agentic teaching assistant built with LangGraph that can inspect your project (safely) to deliver grounded, course-aligned guidance—without handing you full solutions.
+<p align="center">
+  <b>An agentic teaching assistant for programming projects that inspects your code when needed and gives course-aligned, context-aware, Socratic tutoring while preserving the critical thinking students are expected to do.</b>
+</p>
 
-<img src="static/discord-example.png" alt="Discord example" width="600" style="border-radius: 12px;">
+<p align="center">
+  <img src="static/discord-example.png" alt="Discord example" width="700" style="border-radius: 12px;">
+</p>
 
 ## How It Works
 
@@ -24,6 +36,8 @@ Aita is a cybernetic duck-samurai teaching assistant for programming courses. Yo
 4. **It evaluates and may respond** (forms a short 3–5 subgoal plan, then either tutors Socratically with hints and next steps, or suppresses the response if not needed, or escalates to a human TA).
 
 Under the hood, Version 4 uses the GPT-5.1 family of models (reasoning models for decision-making + chat models for response generation), with LangGraph for orchestration and PostgreSQL for persistent state.
+
+**Observability:** [Langfuse](https://langfuse.com) is integrated for tracing only, providing visibility into agent execution flows and LLM calls for debugging and monitoring.
 
 ### Tutoring Approach
 
