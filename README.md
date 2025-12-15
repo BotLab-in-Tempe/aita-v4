@@ -132,6 +132,13 @@ To deploy Aita for a new course, update the following:
 - **Environment Context**: Update `student_environment_context.md` and `sandbox_environment_context.md` with course-specific project structures and conventions
 - **Docker Image**: Customize the sandbox image (`src/aita/sandbox_img/Dockerfile`) if the course requires specific tools or dependencies
 - **Project Paths**: Configure `EXEC_PROJECTS_ROOT` and `EXEC_SNAPSHOT_ROOT` to point to course-specific directories
+- **Docker Compose**: Edit `docker-compose.yml` to update course-specific volume mounts. The current configuration includes CSE 240-specific paths:
+  ```yaml
+  volumes:
+    - /opt/aita/cse240/aita-sandbox:/opt/aita/cse240/aita-sandbox
+    - /opt/data/cse240:/opt/data/cse240
+  ```
+  Replace `cse240` with your course identifier and update the host paths to match your course's directory structure.
 
 </details>
 How to run:
