@@ -52,7 +52,7 @@ Aita uses Socratic questioning and scaffolded guidance to help students discover
 
 ### Architecture Notes
 
-**Agentic retrieval (agentic RAG):** each chat session runs against a student-specific Docker environment that acts as the primary "source of truth" for both project context and code inspection. The environment “source of truth.” Instead of relying only on static embeddings, retriever agents can perform targeted, on-demand exploration of the live project via sandboxed CLI execution (e.g., checking file structure, reading relevant code, running a limited check) so responses stay grounded in the actual state of the code [2].
+**Agentic retrieval (agentic RAG):** each chat session runs against a student-specific Docker environment that acts as the primary "source of truth" for both project context and code inspection. Instead of relying only on static embeddings, retriever agents can perform targeted, on-demand exploration of the live project via sandboxed CLI execution (e.g., checking file structure, reading relevant code, running a limited check) so responses stay grounded in the actual state of the code [2].
 
 **State + summarization (context management):** Aita uses LangGraph’s `MessagesState` as a unified message trace that includes user messages, tutor responses, and internal agent messages (e.g., `[Diagnoser]`, `[Planner]`, `[Evaluator]`). When the trace exceeds a configurable threshold (default 15 messages), a summarizer replaces older messages with a durable summary that preserves essentials (project context, code structure, key findings, progress) to keep the context window manageable [5].
 
