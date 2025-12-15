@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="520" height="180" viewBox="0 0 520 180">
+  <!-- outer frame -->
+  <rect x="10" y="10" width="500" height="160" rx="14" fill="#000000"/>
+  <!-- subtle header bar (no buttons) -->
+  <rect x="10" y="10" width="500" height="28" rx="14" fill="#050505"/>
+  <rect x="10" y="24" width="500" height="14" fill="#050505"/>
+
+  <!-- prompt lines -->
+  <text x="26" y="78" fill="#22c55e"
+        font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace"
+        font-size="22">$ cd /workspace</text>
+
+  <text x="26" y="112" fill="#22c55e"
+        font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace"
+        font-size="22">$ ls</text>
+
+  <text x="26" y="146" fill="#16a34a"
+        font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace"
+        font-size="20">Ubuntu 22.04 " bash " coreutils</text>
+
+  <!-- cursor block -->
+  <rect x="140" y="96" width="12" height="18" fill="#22c55e"/>
+</svg>

@@ -62,12 +62,26 @@ Under the hood, Version 4 uses the GPT-5.1 family of models (reasoning models fo
 
 Aita uses Socratic questioning and scaffolded guidance to help students discover solutions themselves [6]. It avoids providing complete solutions for course projects; instead it guides through concepts, debugging strategy, and incremental next actions. As the conversation evolves, Aita updates its 3–5 subgoal plan [3, 4] to stay aligned with the current objective, escalating help gradually while preserving student autonomy. (See [`src/aita/prompts/catalog/guidelines/`](src/aita/prompts/catalog/guidelines/) for the full philosophy and guardrails.)
 
+<p align="center">
+<img src="static/aita-tutoring.png" alt="Aita tutoring" width="200" style="border-radius: 12px; margin: 5px;">
+  <img src="static/aita-studying.png" alt="Aita studying" width="200" style="border-radius: 12px; margin: 5px;">
+</p>
+
 ### Architecture Notes
 
 **Agentic retrieval (agentic RAG):** each chat session runs against a student-specific Docker environment that acts as the primary "source of truth" for both project context and code inspection. Instead of relying only on static embeddings, retriever agents can perform targeted, on-demand exploration of the live project via sandboxed CLI execution (e.g., checking file structure, reading relevant code, running a limited check) so responses stay grounded in the actual state of the code [2].
 
+<p align="left">
+  <img src="static/agentic-retrieval-terminal.svg" alt="Terminal example" width="200"">
+</p>
+
 **State + summarization (context management):** Aita uses LangGraph’s `MessagesState` as a unified message trace that includes user messages, tutor responses, and internal agent messages (e.g., `[Diagnoser]`, `[Planner]`, `[Evaluator]`). When the trace exceeds a configurable threshold (default 15 messages), a summarizer replaces older messages with a durable summary that preserves essentials (project context, code structure, key findings, progress) to keep the context window manageable [5].
 
+<p align="left">
+  <a href="https://blog.langchain.com/context-engineering-for-agents/">
+    <img src="static/message-summarization-diagram.png" alt="Message summarization diagram" width="300" style="margin: 10px;">
+  </a>
+</p>
 
 ## Agent System
 
