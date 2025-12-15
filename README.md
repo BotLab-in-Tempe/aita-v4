@@ -42,19 +42,19 @@ Aita is a cybernetic duck-samurai teaching assistant for programming courses. Yo
 3. **It inspects the project in a sandbox** (student-specific Docker container; targeted file reads and limited CLI actions).
 4. **It evaluates and may respond** (forms a short 3–5 subgoal plan, then either tutors Socratically with hints and next steps, or suppresses the response if not needed, or escalates to a human TA).
 
-Under the hood, Version 4 uses the GPT-5.1 family of models (reasoning models for decision-making + chat models for response generation), with LangGraph for orchestration and PostgreSQL for persistent state.
+Under the hood, Version 4 uses the GPT-5.1 family of models (reasoning models for decision-making + chat models for response generation), with [LangGraph](https://langchain-ai.github.io/langgraph/) [1] for orchestration and PostgreSQL for persistent state.
 
 **Observability:** [Langfuse](https://langfuse.com) is integrated for tracing only, providing visibility into agent execution flows and LLM calls for debugging and monitoring.
 
 ### Tutoring Approach
 
-Aita uses Socratic questioning and scaffolded guidance to help students discover solutions themselves. It avoids providing complete solutions for course projects; instead it guides through concepts, debugging strategy, and incremental next actions. As the conversation evolves, Aita updates its 3–5 subgoal plan to stay aligned with the current objective, escalating help gradually while preserving student autonomy.
+Aita uses Socratic questioning and scaffolded guidance to help students discover solutions themselves [6]. It avoids providing complete solutions for course projects; instead it guides through concepts, debugging strategy, and incremental next actions. As the conversation evolves, Aita updates its 3–5 subgoal plan [3, 4] to stay aligned with the current objective, escalating help gradually while preserving student autonomy.
 
 ### Architecture Notes
 
-**Agentic retrieval (agentic RAG):** each chat session runs against a student-specific Docker environment that acts as the primary "source of truth" for both project context and code inspection. The environment “source of truth.” Instead of relying only on static embeddings, retriever agents can perform targeted, on-demand exploration of the live project via sandboxed CLI execution (e.g., checking file structure, reading relevant code, running a limited check) so responses stay grounded in the actual state of the code.
+**Agentic retrieval (agentic RAG):** each chat session runs against a student-specific Docker environment that acts as the primary "source of truth" for both project context and code inspection. The environment “source of truth.” Instead of relying only on static embeddings, retriever agents can perform targeted, on-demand exploration of the live project via sandboxed CLI execution (e.g., checking file structure, reading relevant code, running a limited check) so responses stay grounded in the actual state of the code [2].
 
-**State + summarization (context management):** Aita uses LangGraph’s `MessagesState` as a unified message trace that includes user messages, tutor responses, and internal agent messages (e.g., `[Diagnoser]`, `[Planner]`, `[Evaluator]`). When the trace exceeds a configurable threshold (default 15 messages), a summarizer replaces older messages with a durable summary that preserves essentials (project context, code structure, key findings, progress) to keep the context window manageable.
+**State + summarization (context management):** Aita uses LangGraph’s `MessagesState` as a unified message trace that includes user messages, tutor responses, and internal agent messages (e.g., `[Diagnoser]`, `[Planner]`, `[Evaluator]`). When the trace exceeds a configurable threshold (default 15 messages), a summarizer replaces older messages with a durable summary that preserves essentials (project context, code structure, key findings, progress) to keep the context window manageable [5].
 
 
 ## Agent System
@@ -67,18 +67,18 @@ The system consists of specialized nodes that work together:
 
 - **Retriever**: A subgraph that actually goes into the student's Docker container and explores. Three nodes work together here:
   - **Probe Planner**: Figures out what to look for. Reads the conversation, sees what's missing, and generates a focused exploration task.
-  - **CLI Agent**: Runs safe, read-only bash commands (ls, cat, grep, etc.) inside the container. Can't modify anything, just inspects. All the CLI tool calls and outputs get stored in a separate `cli_trace` field, not in the main message trace.
+  - **CLI Agent**: Runs safe, read-only bash commands (ls, cat, grep, etc.) inside the container. Can't modify anything, just inspects. All the CLI tool calls and outputs get stored in a separate `cli_trace` field, not in the main message trace. The agent uses a bash execution tool [2, 10] to interact with the environment.
   - **Diagnoser**: Takes all the CLI output from `cli_trace` and turns it into a clean diagnosis. Filters out internal paths and Docker details, gives you just the insights about the student's code and issue. The diagnosis gets added to the main message trace as `[Diagnoser]`, then `cli_trace` gets cleared. This separation keeps the messy CLI exploration separate from the clean conversation context.
 
-- **Evaluator**: The brain that decides what happens next. Reads the full conversation, checks if the student is stuck or making progress, then outputs control signals: should we create a plan? Should we escalate to a human TA? Should we even respond this turn? Also tracks which subgoals are done and marks them complete. Uses reasoning models to think through all this.
+- **Evaluator**: The brain that decides what happens next. Reads the full conversation, checks if the student is stuck or making progress, then outputs control signals: should we create a plan? Should we escalate to a human TA? Should we even respond this turn? Also tracks which subgoals are done and marks them complete. Uses reasoning models [8, 9] to think through all this.
 
-- **Planner**: When the Evaluator says we need a plan, this node creates one. Takes the conversation history and the current issue, breaks it down into 3-5 subgoals that represent the agent's internal roadmap for helping the student. The plan isn't shown to the student, it's just for coordinating the agents. If the conversation shifts, the Planner replaces the whole plan with a new one.
+- **Planner**: When the Evaluator says we need a plan, this node creates one. Takes the conversation history and the current issue, breaks it down into 3-5 subgoals that represent the agent's internal roadmap for helping the student [3, 4]. The plan isn't shown to the student, it's just for coordinating the agents. If the conversation shifts, the Planner replaces the whole plan with a new one.
 
 - **Dialogue Generator**: This is where Aita actually talks to the student. While the other nodes use reasoning models for structured decision-making, the Dialogue Generator uses `gpt-5.1-chat-latest` to produce natural, engaging responses. It takes all the internal reasoning from the Evaluator, the plan from the Planner, and the diagnostic context from the Retriever, then turns it into a conversation that feels human, calm, direct, and helpful without giving away the answer.
 
-- **Message Summarizer**: The message trace keeps growing, every student message, every agent decision, every diagnosis gets added. Eventually you hit the context limit. So when the trace exceeds a threshold (default 15 messages), this node compresses everything into a summary. It's not just trimming, it's actually understanding what matters and preserving the essential context while throwing away the noise. The old messages get removed, the summary takes their place, and the conversation continues without losing critical information.
+- **Message Summarizer**: The message trace keeps growing, every student message, every agent decision, every diagnosis gets added. Eventually you hit the context limit. So when the trace exceeds a threshold (default 15 messages), this node compresses everything into a summary. It's not just trimming, it's actually understanding what matters and preserving the essential context while throwing away the noise [5, 12]. The old messages get removed, the summary takes their place, and the conversation continues without losing critical information.
 
-## Setup
+## Setup and Usage
 
 <details>
 <summary>Click to expand setup instructions</summary>
@@ -134,9 +134,7 @@ To deploy Aita for a new course, update the following:
 - **Project Paths**: Configure `EXEC_PROJECTS_ROOT` and `EXEC_SNAPSHOT_ROOT` to point to course-specific directories
 
 </details>
-
-## Usage
-
+How to run:
 <details>
 <summary>Click to expand usage instructions</summary>
 
