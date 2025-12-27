@@ -71,6 +71,11 @@ Aita uses Socratic questioning and scaffolded guidance to help students discover
 
 **Agentic retrieval (agentic RAG):** each chat session runs against a student-specific Docker environment that acts as the primary "source of truth" for both project context and code inspection. Instead of relying only on static embeddings, retriever agents can perform targeted, on-demand exploration of the live project via sandboxed CLI execution (e.g., checking file structure, reading relevant code, running a limited check) so responses stay grounded in the actual state of the code [2].
 
+Right now the CLI agent is intended to be read-only, so using Docker is optional. If you want a simpler setup, you can run the same read-only commands directly on the host (with a strict allowlist and project-root sandboxing) and still get safe, concurrent execution.
+
+The original Docker setup was designed to support a future version where the agent can safely run student code and tools (tests, builds, dependency installs) with strong isolation and resource controls, and we expect to lean into that more fully in v5.
+
+
 <p align="left">
   <img src="static/agentic-retrieval-terminal.svg" alt="Terminal example" width="200"">
 </p>
